@@ -6,42 +6,60 @@
 component {
 
 	// Module Properties
-	this.title 				= "@MODULE_NAME@";
-	this.author 			= "Ortus Solutions";
-	this.webURL 			= "https://www.ortussolutions.com";
-	this.description 		= "@MODULE_DESCRIPTION@";
-	this.version 			= "@build.version@+@build.number@";
+	this.title       = "oAuth";
+	this.author      = "Ortus Solutions";
+	this.webURL      = "https://www.ortussolutions.com";
+	this.description = "@MODULE_DESCRIPTION@";
+	this.version     = "@build.version@+@build.number@";
 
 	// Model Namespace
-	this.modelNamespace		= "@MODULE_SLUG@";
+	this.modelNamespace = "oauth";
 
 	// CF Mapping
-	this.cfmapping			= "@MODULE_SLUG@";
+	this.cfmapping = "oauth";
 
 	// Dependencies
-	this.dependencies 		= [];
+	this.dependencies = [ "hyper" ];
 
 	/**
 	 * Configure Module
 	 */
 	function configure(){
 		settings = {
-
+			disabledProviders : [ "google" ],
+			providers         : [
+				// Your google login API credentials
+				"google": {
+					clientId            : getSystemSetting( key = "GOOGLE_CLIENT_ID", defaultValue = "" ),
+					clientSecret        : getSystemSetting( key = "GOOGLE_CLIENT_SECRET", defaultValue = "" ),
+					authEndpoint        : "https://accounts.google.com/o/oauth2/v2/auth",
+					accessTokenEndpoint : "https://www.googleapis.com/oauth2/v4/token",
+					redirectUri         : getSystemSetting( key = "GOOGLE_REDIRECT_URI", defaultValue = "" )
+				},
+				// Your facebook login API credentials
+				"facebook": {
+					clientId            : getSystemSetting( key = "FACEBOOK_CLIENT_ID", defaultValue = "" ),
+					clientSecret        : getSystemSetting( key = "FACEBOOK_CLIENT_SECRET", defaultValue = "" ),
+					authEndpoint        : "https://www.facebook.com/v2.10/dialog/oauth",
+					accessTokenEndpoint : "https://graph.facebook.com/v2.10/oauth/access_token",
+					redirectUri         : getSystemSetting( key = "FACEBOOK_REDIRECT_URI", defaultValue = "" )
+				}
+			];
 		};
-	}
+	};
 
-	/**
-	 * Fired when the module is registered and activated.
-	 */
-	function onLoad(){
+}
 
-	}
+/**
+ * Fired when the module is registered and activated.
+ */
+function onLoad(){
+}
 
-	/**
-	 * Fired when the module is unregistered and unloaded
-	 */
-	function onUnload(){
-
-	}
+/**
+ * Fired when the module is unregistered and unloaded
+ */
+function onUnload(){
+}
 
 }
