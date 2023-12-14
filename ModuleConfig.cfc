@@ -26,7 +26,6 @@ component {
 	 */
 	function configure(){
 		settings = {
-			disabledProviders : [ "google" ],
 			providers         : [
 				// Your google login API credentials
 				"google": {
