@@ -13,18 +13,18 @@ component
 	function onDIComplete(){
 		var providerSettings = moduleSettings.providers.google;
 
-		variables.clientId            = providerSettings.clientId,
-		variables.clientSecret        = providerSettings.clientSecret,
-		variables.authEndpoint        = providerSettings.authEndpoint,
-		variables.accessTokenEndpoint = providerSettings.accessTokenEndpoint,
-		variables.redirectUri         = providerSettings.redirectUri
+		variables.clientId            = providerSettings.clientId;
+		variables.clientSecret        = providerSettings.clientSecret;
+		variables.authEndpoint        = providerSettings.authEndpoint;
+		variables.accessTokenEndpoint = providerSettings.accessTokenEndpoint;
+		variables.redirectUri         = providerSettings.redirectUri;
 	}
 
 
 	public string function buildAuthUrl(
-		required array scope        = [ "openid" ],
 		required string access_type = "online",
 		required string state,
+		array scope                    = [ "openid profile" ],
 		boolean include_granted_scopes = true,
 		string login_hint              = "",
 		string prompt                  = ""

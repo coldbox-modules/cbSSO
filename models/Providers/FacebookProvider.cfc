@@ -13,11 +13,11 @@ component
 	function onDIComplete(){
 		var providerSettings = moduleSettings.providers.facebook;
 
-		variables.clientId            = providerSettings.clientId,
-		variables.clientSecret        = providerSettings.clientSecret,
-		variables.authEndpoint        = providerSettings.authEndpoint,
-		variables.accessTokenEndpoint = providerSettings.accessTokenEndpoint,
-		variables.redirectUri         = providerSettings.redirectUri
+		variables.clientId            = providerSettings.clientId;
+		variables.clientSecret        = providerSettings.clientSecret;
+		variables.authEndpoint        = providerSettings.authEndpoint;
+		variables.accessTokenEndpoint = providerSettings.accessTokenEndpoint;
+		variables.redirectUri         = providerSettings.redirectUri;
 	}
 
 
