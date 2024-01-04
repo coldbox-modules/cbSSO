@@ -54,7 +54,8 @@ component accessors="true" {
 
 		if ( arrayLen( arguments.headers ) ) {
 			for ( var item in arguments.headers ) {
-				requestHeaders.append( { item[ "name" ]   : item[ "value" ] } );
+				// requestHeaders.append( { item[ "name" ]   : item[ "value" ] } );
+				requestHeaders.append( { "#item[ "name" ]#" : item[ "value" ] } );
 			}
 		}
 
@@ -101,7 +102,7 @@ component accessors="true" {
 
 		if ( arrayLen( arguments.headers ) ) {
 			for ( var item in arguments.headers ) {
-				requestHeaders.append( { item[ "name" ] : item[ "value" ] } );
+				requestHeaders.append( { "#item[ "name" ]#" : item[ "value" ] } );
 			}
 		}
 
