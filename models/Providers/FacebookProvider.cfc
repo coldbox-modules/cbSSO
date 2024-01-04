@@ -7,18 +7,18 @@ component
 
 	property name="moduleSettings" inject="coldbox:ModuleSettings:oauth";
 
-	/**
-	 * onDIComplete
-	 */
-	function onDIComplete(){
-		var providerSettings = moduleSettings.providers.facebook;
+	// /**
+	//  * onDIComplete
+	//  */
+	// function onDIComplete(){
+	// 	var providerSettings = moduleSettings.providers.facebook;
 
-		variables.clientId            = providerSettings.clientId;
-		variables.clientSecret        = providerSettings.clientSecret;
-		variables.authEndpoint        = providerSettings.authEndpoint;
-		variables.accessTokenEndpoint = providerSettings.accessTokenEndpoint;
-		variables.redirectUri         = providerSettings.redirectUri;
-	}
+	// 	variables.clientId            = providerSettings.clientId;
+	// 	variables.clientSecret        = providerSettings.clientSecret;
+	// 	variables.authEndpoint        = providerSettings.authEndpoint;
+	// 	variables.accessTokenEndpoint = providerSettings.accessTokenEndpoint;
+	// 	variables.redirectUri         = providerSettings.redirectUri;
+	// }
 
 
 	public string function buildAuthUrl( required array scope, required string state ){

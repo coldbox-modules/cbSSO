@@ -3,7 +3,7 @@
  * The base model to retrieve user information when user logs in
  *
  * */
- component accessors="true" {
+component accessors="true" {
 
 	property name="subjet"; // The unique identifier for the user.
 	property name="username"; // The username.

@@ -26,7 +26,7 @@ component {
 	 */
 	function configure(){
 		settings = {
-			providers         : [
+			providers : [
 				// Your google login API credentials
 				"google": {
 					clientId            : getSystemSetting( key = "GOOGLE_CLIENT_ID", defaultValue = "" ),
@@ -47,18 +47,19 @@ component {
 		};
 	};
 
-}
 
-/**
- * Fired when the module is registered and activated.
- */
-function onLoad(){
-}
+	/**
+	 * Fired when the module is registered and activated.
+	 */
+	function onLoad(){
+		// Register all app disks
+		wirebox.getInstance( "ProviderService@oAuth" ).registerProviders();
+	}
 
-/**
- * Fired when the module is unregistered and unloaded
- */
-function onUnload(){
-}
+	/**
+	 * Fired when the module is unregistered and unloaded
+	 */
+	function onUnload(){
+	}
 
 }
