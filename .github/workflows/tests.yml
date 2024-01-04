@@ -26,15 +26,6 @@ jobs:
           - coldboxVersion: "be"
             cfengine: "lucee@5"
             experimental: true
-          - coldboxVersion: "be"
-            cfengine: "adobe@2018"
-            experimental: true
-          - coldboxVersion: "be"
-            cfengine: "adobe@2021"
-            experimental: true
-          - coldboxVersion: "be"
-            cfengine: "adobe@2023"
-            experimental: true
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
