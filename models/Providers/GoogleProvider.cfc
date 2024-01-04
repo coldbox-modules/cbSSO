@@ -13,6 +13,7 @@ component
 	function onDIComplete(){
 		var providerSettings = moduleSettings.providers.google;
 
+		variables.name                = "Google";
 		variables.clientId            = providerSettings.clientId;
 		variables.clientSecret        = providerSettings.clientSecret;
 		variables.authEndpoint        = providerSettings.authEndpoint;
@@ -20,10 +21,9 @@ component
 		variables.redirectUri         = providerSettings.redirectUri;
 	}
 
-
 	public string function buildAuthUrl(
-		required string access_type = "online",
-		required string state,
+		required string access_type    = "online",
+		required string state          = false,
 		array scope                    = [ "openid profile" ],
 		boolean include_granted_scopes = true,
 		string login_hint              = "",
@@ -33,16 +33,16 @@ component
 			"client_id"     : variables.clientId,
 			"response_type" : "code",
 			"scope"         : arrayToList( arguments.scope, " " ),
-			"redirect_uri " : variables.redirectUri,
+			"redirect_uri"  : variables.redirectUri,
 			"state"         : arguments.state
 		};
 		if ( len( arguments.login_hint ) ) {
-			structInsert( sParams, "login_hint", arguments.login_hint );
+			structInsert( authParams, "login_hint", arguments.login_hint );
 		}
 		if ( len( arguments.prompt ) ) {
-			structInsert( sParams, "prompt", arguments.prompt );
+			structInsert( authParams, "prompt", arguments.prompt );
 		}
-		return super.buildAuthUrl( sParams, false );
+		return super.buildAuthUrl( authParams, false );
 	}
 
 	/**

@@ -52,18 +52,18 @@ component accessors="true" singleton threadsafe {
 	}
 
 	function googleProvider(){
-		return get( "google" );
+		return get( name = "google" );
 	}
 
 	function get( required name ){
 		var providerRecord = getProviderRecord( arguments.name );
 
 		// Lazy load the disk instance
-		if ( isNull( providerRecord.name ) ) {
+		if ( isNull( providerRecord.provider ) ) {
 			lock name="oauth-createProvider-#arguments.name#" type="exclusive" timeout="10" throwOnTimeout="true" {
-				if ( isNull( providerRecord.name ) ) {
+				if ( isNull( providerRecord.provider ) ) {
 					log.debug( "Provider (#arguments.name#) not built, building it now." );
-					providerRecord.provider  = buildProvider( provider: diskRecord.provider );
+					providerRecord.provider  = buildProvider( provider: providerRecord.name );
 					providerRecord.createdOn = now();
 				}
 			}
@@ -77,7 +77,7 @@ component accessors="true" singleton threadsafe {
 		if ( missing( arguments.name ) ) {
 			throw(
 				message: "The provider you requested (#arguments.name#) has not been registered.",
-				type   : "InvalidProvider"
+				type   : "InvalidProviderException"
 			)
 		}
 		return variables.providers[ arguments.name ];
@@ -118,6 +118,21 @@ component accessors="true" singleton threadsafe {
 		}
 
 		return variables.registeredCoreProviders;
+	}
+
+	boolean function has( required name ){
+		return variables.providers.keyExists( arguments.name );
+	}
+
+	boolean function missing( required name ){
+		return !this.has( arguments.name );
+	}
+
+	array function names(){
+		var names = variables.providers.keyArray();
+		// Dumb ACF 2016 Member function
+		names.sort( "textNocase" );
+		return names;
 	}
 
 }

@@ -7,24 +7,30 @@ component accessors="true" {
 
 	property name="hyper" inject="HyperBuilder@hyper";
 
+	property name="identifier" type="string";
+
+	property name="name" type="string";
+
 	/**
 	 * Constructor
 	 */
 	function init(){
+		variables.identifier = createUUID();
+		variables.name       = "";
 		return this;
+	}
+
+	public string function getProviderName(){
+		return variables.name;
 	}
 
 
 	/**
 	 * getAuthUrl
 	 */
-	function buildAuthUrl( struct params = {}, boolean state = false ){
+	string function buildAuthUrl( struct params = {}, boolean state = false ){
 		var queryString = structToQueryString(
-			iIf(
-				params.isEmpty(),
-				getCodeParams( arguments.state ),
-				arguments.params
-			)
+			params.isEmpty() ? getCodeRequestParams( arguments.state ) : arguments.params
 		);
 		return variables.authEndpoint & queryString;
 	}
@@ -48,7 +54,7 @@ component accessors="true" {
 
 		if ( arrayLen( arguments.headers ) ) {
 			for ( var item in arguments.headers ) {
-				requestHeaders.append( { item[ "name" ]    : item[ "value" ] } );
+				requestHeaders.append( { item[ "name" ] : item[ "value" ] } );
 			}
 		}
 
@@ -95,7 +101,7 @@ component accessors="true" {
 
 		if ( arrayLen( arguments.headers ) ) {
 			for ( var item in arguments.headers ) {
-				requestHeaders.append( { item[ "name" ]    : item[ "value" ] } );
+				requestHeaders.append( { item[ "name" ]                      : item[ "value" ] } );
 			}
 		}
 
@@ -135,7 +141,6 @@ component accessors="true" {
 		var params = {
 			"client_id"     : variables.clientId,
 			"redirect_uri"  : variables.redirectURI,
-			"scope"         : variables.scopes.toList( variables.scopeSeparator ),
 			"response_type" : variables.responseType
 		};
 		if ( !variables.stateless ) {

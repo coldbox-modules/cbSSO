@@ -1,87 +1,88 @@
-﻿component{
+﻿component {
 
 	// Configure ColdBox Application
 	function configure(){
-
 		// coldbox directives
 		coldbox = {
-			//Application Setup
-			appName 				= "Module Tester",
+			// Application Setup
+			appName                 : "Module Tester",
+			// Development Settings
+			reinitPassword          : "",
+			handlersIndexAutoReload : true,
+			modulesExternalLocation : [],
+			// Implicit Events
+			defaultEvent            : "",
+			requestStartHandler     : "",
+			requestEndHandler       : "",
+			applicationStartHandler : "",
+			applicationEndHandler   : "",
+			sessionStartHandler     : "",
+			sessionEndHandler       : "",
+			missingTemplateHandler  : "",
+			// Error/Exception Handling
+			exceptionHandler        : "",
+			onInvalidEvent          : "",
+			customErrorTemplate     : "/coldbox/system/exceptions/Whoops.cfm",
+			// Application Aspects
+			handlerCaching          : false,
+			eventCaching            : false
+		};
 
-			//Development Settings
-			reinitPassword			= "",
-			handlersIndexAutoReload = true,
-			modulesExternalLocation = [],
-
-			//Implicit Events
-			defaultEvent			= "",
-			requestStartHandler		= "",
-			requestEndHandler		= "",
-			applicationStartHandler = "",
-			applicationEndHandler	= "",
-			sessionStartHandler 	= "",
-			sessionEndHandler		= "",
-			missingTemplateHandler	= "",
-
-			//Error/Exception Handling
-			exceptionHandler		= "",
-			onInvalidEvent			= "",
-			customErrorTemplate 	= "/coldbox/system/exceptions/Whoops.cfm",
-
-			//Application Aspects
-			handlerCaching 			= false,
-			eventCaching			= false
+		moduleSettings = {
+			"oauth" : {
+				"providers" : [
+					// Your google login API credentials
+					"google": {
+						clientId            : "***REMOVED***",
+						clientSecret        : "***REMOVED***",
+						authEndpoint        : "https://accounts.google.com/o/oauth2/v2/auth",
+						accessTokenEndpoint : "https://www.googleapis.com/oauth2/v4/token",
+						redirectUri         : "http://localhost:8080"
+					}
+				]
+			}
 		};
 
 		// environment settings, create a detectEnvironment() method to detect it yourself.
 		// create a function with the name of the environment so it can be executed if that environment is detected
 		// the value of the environment is a list of regex patterns to match the cgi.http_host.
-		environments = {
-			development = "localhost,127\.0\.0\.1"
-		};
+		environments = { development : "localhost,127\.0\.0\.1" };
 
 		// Module Directives
 		modules = {
 			// An array of modules names to load, empty means all of them
-			include = [],
+			include : [],
 			// An array of modules names to NOT load, empty means none
-			exclude = []
+			exclude : []
 		};
 
-		//Register interceptors as an array, we need order
-		interceptors = [
-		];
+		// Register interceptors as an array, we need order
+		interceptors = [];
 
-		//LogBox DSL
+		// LogBox DSL
 		logBox = {
 			// Define Appenders
-			appenders = {
+			appenders : {
 				myConsole : { class : "ConsoleAppender" },
-				files : {
-					class="RollingFileAppender",
-					properties = {
-						filename = "tester", filePath="/#appMapping#/logs"
-					}
+				files     : {
+					class      : "RollingFileAppender",
+					properties : { filename : "tester", filePath : "/#appMapping#/logs" }
 				}
 			},
 			// Root Logger
-			root = { levelmax="DEBUG", appenders="*" },
+			root : { levelmax : "DEBUG", appenders : "*" },
 			// Implicit Level Categories
-			info = [ "coldbox.system" ]
+			info : [ "coldbox.system" ]
 		};
-
 	}
 
 	/**
 	 * Load the Module you are testing
 	 */
 	function afterAspectsLoad( event, interceptData, rc, prc ){
-
-		controller.getModuleService()
-			.registerAndActivateModule(
-				moduleName 		= request.MODULE_NAME,
-				invocationPath 	= "moduleroot"
-			);
+		controller
+			.getModuleService()
+			.registerAndActivateModule( moduleName = request.MODULE_NAME, invocationPath = "moduleroot" );
 	}
 
 }
