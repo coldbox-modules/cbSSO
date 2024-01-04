@@ -2,7 +2,7 @@ component
 	singleton
 	threadsafe
 	accessors="true"
-	extends  ="oAuth2.models.BaseProvider"
+	extends  ="oAuth.models.BaseProvider"
 {
 
 	property name="moduleSettings" inject="coldbox:ModuleSettings:oauth";

@@ -11,19 +11,19 @@
         "rewrites":{
             "enable":"true"
         },
-		"webroot": "test-harness",
-		"aliases":{
-            "/moduleroot/oAuth2":"../"
+        "webroot":"test-harness",
+        "aliases":{
+            "/moduleroot/oAuth":"../"
         }
     },
     "jvm":{
         "heapSize":"1024"
     },
     "openBrowser":"false",
-	"cfconfig": {
-		"file" : ".cfconfig.json"
-	},
-    "scripts" : {
+    "cfconfig":{
+        "file":".cfconfig.json"
+    },
+    "scripts":{
         "onServerInstall":"cfpm install zip,debugger"
     }
 }

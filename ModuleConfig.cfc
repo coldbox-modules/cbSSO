@@ -13,7 +13,7 @@ component {
 	this.version     = "@build.version@+@build.number@";
 
 	// Model Namespace
-	this.modelNamespace = "oauth";
+	this.modelNamespace = "oAuth";
 
 	// CF Mapping
 	this.cfmapping = "oauth";
@@ -43,7 +43,7 @@ component {
 					accessTokenEndpoint : "https://graph.facebook.com/v2.10/oauth/access_token",
 					redirectUri         : getSystemSetting( key = "FACEBOOK_REDIRECT_URI", defaultValue = "" )
 				}
-			];
+			]
 		};
 	};
 

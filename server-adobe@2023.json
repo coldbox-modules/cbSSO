@@ -13,7 +13,7 @@
         },
 		"webroot": "test-harness",
 		"aliases":{
-            "/moduleroot/oAuth2":"../"
+            "/moduleroot/oAuth":"../"
         }
     },
     "jvm":{
