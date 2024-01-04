@@ -44,7 +44,9 @@ component extends="coldbox.system.testing.BaseTestCase" {
 
 			story( "I can authenticate with the provider", function(){
 				it( "can build the auth url", function(){
-					expect( provider.buildAuthUrl() ).toBe( "https://accounts.google.com/o/oauth2/v2/auth?client_id=***REMOVED***&state=false&redirect_uri=http://localhost:8080&scope=openid profile&response_type=code" );
+					expect( provider.buildAuthUrl() ).toBe(
+						"https://accounts.google.com/o/oauth2/v2/auth?client_id=***REMOVED***&state=false&redirect_uri=http://localhost:8080&scope=openid profile&response_type=code"
+					);
 				} );
 			} );
 		} );
