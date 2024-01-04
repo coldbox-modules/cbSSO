@@ -1,17 +1,17 @@
 {
-    "name":"@MODULE_NAME@",
+    "name":"oAuth2",
     "version":"1.0.0",
-    "location":"https://downloads.ortussolutions.com/ortussolutions/coldbox-modules/@MODULE_SLUG@/@build.version@/@MODULE_SLUG@-@build.version@.zip",
+    "location":"https://downloads.ortussolutions.com/ortussolutions/coldbox-modules/oAuth2/@build.version@/oAuth2-@build.version@.zip",
     "author":"Ortus Solutions <info@ortussolutions.com>",
-    "homepage":"https://github.com/coldbox-modules/@MODULE_SLUG@",
-    "documentation":"https://github.com/coldbox-modules/@MODULE_SLUG@",
+    "homepage":"https://github.com/coldbox-modules/oAuth2",
+    "documentation":"https://github.com/coldbox-modules/oAuth2",
     "repository":{
         "type":"git",
-        "url":"https://github.com/coldbox-modules/@MODULE_SLUG@"
+        "url":"https://github.com/coldbox-modules/oAuth2"
     },
-    "bugs":"https://github.com/coldbox-modules/@MODULE_SLUG@",
+    "bugs":"https://github.com/coldbox-modules/oAuth2",
     "shortDescription":"Description goes here",
-    "slug":"@MODULE_SLUG@",
+    "slug":"oAuth2",
     "type":"modules",
     "keywords":"",
     "license":[
