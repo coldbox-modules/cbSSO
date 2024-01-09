@@ -80,8 +80,6 @@ component accessors="true" singleton threadsafe {
 		if ( getRegisteredCoreProviders().keyExists( arguments.provider ) ) {
 			arguments.provider = variables.registeredCoreProviders[ arguments.provider ];
 		}
-		writeDump( var = "arguments.provider: " & arguments.provider );
-		abort;
 		// Build it out
 		return variables.wirebox.getInstance( arguments.provider );
 	}
@@ -92,7 +90,7 @@ component accessors="true" singleton threadsafe {
 	private function getRegisteredCoreProviders(){
 		if ( isNull( variables.registeredCoreProviders ) ) {
 			// Providers Path
-			variables.providersPath           = variables.moduleConfig.modelsPhysicalPath & "/Providers";
+			variables.providersPath           = variables.moduleConfig.modelsPhysicalPath & "/providers";
 			// Register core disk providers
 			variables.registeredCoreProviders = directoryList(
 				variables.providersPath,
