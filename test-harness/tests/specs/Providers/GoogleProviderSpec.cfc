@@ -1,13 +1,13 @@
 /**
  * Disk Service Spec
  */
-component extends="coldbox.system.testing.BaseTestCase" {
+component extends="oAuth.models.testing.BaseProviderSpec" {
 
 	this.loadColdbox   = true;
 	// Unload Coldbox after this spec, since we are doing a shutdown of all disks
 	this.unLoadColdBox = true;
 
-	variables.provider = "";
+	variables.providerName = "GOOGLE";
 
 	/*********************************** LIFE CYCLE Methods ***********************************/
 
@@ -32,9 +32,8 @@ component extends="coldbox.system.testing.BaseTestCase" {
 		// all your suites go here.
 		describe( "Google Specs", function(){
 			beforeEach( function( currentSpec ){
-				provider = getProvider( providerName = "google" );
+				provider = getProvider();
 			} );
-
 
 			story( "The disk should be created and started by the service", function(){
 				it( "is started by the service", function(){
@@ -45,25 +44,18 @@ component extends="coldbox.system.testing.BaseTestCase" {
 			story( "I can authenticate with the provider", function(){
 				it( "can build the auth url", function(){
 					expect( provider.buildAuthUrl() ).toBe(
-						"https://accounts.google.com/o/oauth2/v2/auth?client_id=***REMOVED***&state=false&redirect_uri=http://localhost:8080&scope=openid profile&response_type=code"
+						"https://accounts.google.com/o/oauth2/v2/auth?client_id=***REMOVED***&access_type=offline&state=false&redirect_uri=http://localhost:8080/auth&scope=openid profile&response_type=code"
 					);
+				} );
+
+				it( "can build the request token url", function(){
+					var code = "any-token";
+					var tokenResponse = provider.makeAccessTokenRequest( code );
+
+					expect( tokenResponse.content.getRequest().getBody() ).toInclude( code );
 				} );
 			} );
 		} );
-	}
-
-	/**
-	 * ------------------------------------------------------------
-	 * Test Helpers
-	 * ------------------------------------------------------------
-	 */
-
-	function getProvider( required string providerName = "" ){
-		return getInstance( "ProviderService@oAuth" ).get( arguments.providerName );
-	}
-
-	function getProvidersList( required string providerName = "" ){
-		return getInstance( "ProviderService@oAuth" ).names();
 	}
 
 }

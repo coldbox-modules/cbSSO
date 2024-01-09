@@ -47,14 +47,6 @@ component accessors="true" singleton threadsafe {
 		return this;
 	}
 
-	function facebookProvider(){
-		return get( "facebook" );
-	}
-
-	function googleProvider(){
-		return get( name = "google" );
-	}
-
 	function get( required name ){
 		var providerRecord = getProviderRecord( arguments.name );
 

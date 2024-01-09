@@ -32,7 +32,7 @@ component accessors="true" {
 		var queryString = structToQueryString(
 			params.isEmpty() ? getCodeRequestParams( arguments.state ) : arguments.params
 		);
-		return variables.authEndpoint & queryString;
+		return variables.authEndpoint & "?" & queryString;
 	}
 
 
@@ -50,29 +50,19 @@ component accessors="true" {
 	){
 		var hyper          = hyper.new();
 		var stuResponse    = {};
-		var requestHeaders = {};
+		var requestHeaders = { "Content-Type" : "application/x-www-form-urlencoded" };
 
 		if ( arrayLen( arguments.headers ) ) {
 			for ( var item in arguments.headers ) {
-				// requestHeaders.append( { item[ "name" ]    : item[ "value" ] } );
 				requestHeaders.append( { "#item[ "name" ]#" : item[ "value" ] } );
 			}
 		}
 
-		var requestParams = {
-			client_id     : variables.clientId,
-			client_secret : variables.clientSecret,
-			code          : arguments.code,
-			redirect_uri  : variables.redirectUri,
-			grant_type    : "authorization_code"
-		};
-
 		var response = hyper
 			.setMethod( "POST" )
 			.setUrl( variables.accessTokenEndpoint )
-			.withHeaders( headers )
-			.setBody( requestParams )
-			.asFormFields()
+			.setHeaders( requestHeaders )
+			.setBody( structToQueryString( getTokenRequestParams( arguments.code ) ) )
 			.send();
 
 		if ( response.isSuccess() ) {
@@ -80,7 +70,7 @@ component accessors="true" {
 			stuResponse.content = response.getBody();
 		} else {
 			stuResponse.success = false;
-			stuResponse.content = response.getStatusText();
+			stuResponse.content = response;
 		}
 
 		return stuResponse;
@@ -116,7 +106,7 @@ component accessors="true" {
 		var response = hyper
 			.setMethod( "POST" )
 			.setUrl( variables.accessTokenEndpoint )
-			.withHeaders( headers )
+			.withHeaders( requestHeaders )
 			.setBody( requestParams )
 			.asFormFields()
 			.send();
@@ -152,10 +142,11 @@ component accessors="true" {
 
 	function getTokenRequestParams( required String code ){
 		return {
+			"code"          : arguments.code,
 			"client_id"     : variables.clientId,
 			"client_secret" : variables.clientSecret,
-			"code"          : arguments.code,
-			"redirect_uri"  : variables.redirectURI
+			"redirect_uri"  : variables.redirectURI,
+			"grant_type"    : "authorization_code"
 		};
 	}
 
@@ -165,7 +156,7 @@ component accessors="true" {
 	 * @paramsStruct the struct I want to conver
 	 */
 	function structToQueryString( required struct args ){
-		var queryStr = "?";
+		var queryStr = "";
 
 		if ( structCount( arguments.args ) ) {
 			var intCount = 1;

@@ -31,13 +31,12 @@
 		moduleSettings = {
 			"oauth" : {
 				"providers" : [
-					// Your google login API credentials
 					"google": {
 						clientId            : "***REMOVED***",
 						clientSecret        : "***REMOVED***",
 						authEndpoint        : "https://accounts.google.com/o/oauth2/v2/auth",
-						accessTokenEndpoint : "https://www.googleapis.com/oauth2/v4/token",
-						redirectUri         : "http://localhost:8080"
+						accessTokenEndpoint : "https://oauth2.googleapis.com/token",
+						redirectUri         : "http://localhost:8080/auth"
 					}
 				]
 			}

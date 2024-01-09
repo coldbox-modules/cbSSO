@@ -34,7 +34,8 @@ component
 			"response_type" : "code",
 			"scope"         : arrayToList( arguments.scope, " " ),
 			"redirect_uri"  : variables.redirectUri,
-			"state"         : arguments.state
+			"state"         : arguments.state,
+			"access_type"   : "offline"
 		};
 		if ( len( arguments.login_hint ) ) {
 			structInsert( authParams, "login_hint", arguments.login_hint );
