@@ -7,7 +7,7 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 	// Unload Coldbox after this spec, since we are doing a shutdown of all disks
 	this.unLoadColdBox = true;
 
-	variables.providerName = "Google";
+	variables.providerName = "GOogle";
 
 	/*********************************** LIFE CYCLE Methods ***********************************/
 
@@ -32,6 +32,7 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 		// all your suites go here.
 		describe( "Google Specs", function(){
 			beforeEach( function( currentSpec ){
+				writeDump(var=variables.providerName);
 				provider = getProvider();
 			} );
 
