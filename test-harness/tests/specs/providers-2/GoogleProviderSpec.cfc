@@ -49,7 +49,7 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 				} );
 
 				it( "can build the request token url", function(){
-					var code = "any-token";
+					var code          = "any-token";
 					var tokenResponse = provider.makeAccessTokenRequest( code );
 
 					expect( tokenResponse.content.getRequest().getBody() ).toInclude( code );
