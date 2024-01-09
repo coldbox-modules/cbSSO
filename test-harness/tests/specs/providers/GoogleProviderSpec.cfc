@@ -7,7 +7,7 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 	// Unload Coldbox after this spec, since we are doing a shutdown of all disks
 	this.unLoadColdBox = true;
 
-	variables.providerName = "GOOGLE";
+	variables.providerName = "Google";
 
 	/*********************************** LIFE CYCLE Methods ***********************************/
 

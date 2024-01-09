@@ -31,7 +31,7 @@
 		moduleSettings = {
 			"oauth" : {
 				"providers" : [
-					"google": {
+					"Google": {
 						clientId            : "***REMOVED***",
 						clientSecret        : "***REMOVED***",
 						authEndpoint        : "https://accounts.google.com/o/oauth2/v2/auth",
