@@ -80,6 +80,8 @@ component accessors="true" singleton threadsafe {
 		if ( getRegisteredCoreProviders().keyExists( arguments.provider ) ) {
 			arguments.provider = variables.registeredCoreProviders[ arguments.provider ];
 		}
+		writeDump(var= "arguments.provider: " & arguments.provider);
+		abort;
 		// Build it out
 		return variables.wirebox.getInstance( arguments.provider );
 	}
