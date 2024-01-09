@@ -77,15 +77,15 @@ component accessors="true" singleton threadsafe {
 
 	private function buildProvider( required provider ){
 		// is this core?
-		writeDump(var="before building provider");
-		writeDump(var=arguments.provider);
+		writeDump( var = "before building provider" );
+		writeDump( var = arguments.provider );
 		if ( getRegisteredCoreProviders().keyExists( arguments.provider ) ) {
 			arguments.provider = variables.registeredCoreProviders[ arguments.provider ];
 		}
-		writeDump(var="getRegisteredCoreProviders");
-		writeDump(var=getRegisteredCoreProviders());
-		writeDump(var="after building provider");
-		writeDump(var=arguments.provider);
+		writeDump( var = "getRegisteredCoreProviders" );
+		writeDump( var = getRegisteredCoreProviders() );
+		writeDump( var = "after building provider" );
+		writeDump( var = arguments.provider );
 		// Build it out
 		return variables.wirebox.getInstance( arguments.provider );
 	}
