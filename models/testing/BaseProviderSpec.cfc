@@ -29,33 +29,33 @@ component extends="coldbox.system.testing.BaseTestCase" {
 	/*********************************** BDD SUITES ***********************************/
 
 	// function run( testResults, testBox ){
-		// all your suites go here.
-		// describe( "Google Specs", function(){
-		// 	beforeEach( function( currentSpec ){
-		// 		provider = getProvider( providerName = "google" );
-		// 	} );
+	// all your suites go here.
+	// describe( "Google Specs", function(){
+	// 	beforeEach( function( currentSpec ){
+	// 		provider = getProvider( providerName = "google" );
+	// 	} );
 
-		// 	story( "The disk should be created and started by the service", function(){
-		// 		it( "is started by the service", function(){
-		// 			expect( provider ).toBeComponent();
-		// 		} );
-		// 	} );
+	// 	story( "The disk should be created and started by the service", function(){
+	// 		it( "is started by the service", function(){
+	// 			expect( provider ).toBeComponent();
+	// 		} );
+	// 	} );
 
-		// 	story( "I can authenticate with the provider", function(){
-		// 		it( "can build the auth url", function(){
-		// 			expect( provider.buildAuthUrl() ).toBe(
-		// 				"https://accounts.google.com/o/oauth2/v2/auth?client_id=***REMOVED***&access_type=offline&state=false&redirect_uri=http://localhost:8080/auth&scope=openid profile&response_type=code"
-		// 			);
-		// 		} );
+	// 	story( "I can authenticate with the provider", function(){
+	// 		it( "can build the auth url", function(){
+	// 			expect( provider.buildAuthUrl() ).toBe(
+	// 				"https://accounts.google.com/o/oauth2/v2/auth?client_id=***REMOVED***&access_type=offline&state=false&redirect_uri=http://localhost:8080/auth&scope=openid profile&response_type=code"
+	// 			);
+	// 		} );
 
-		// 		it( "can build the request token url", function(){
-		// 			var code = "any-token";
-		// 			var tokenResponse = provider.makeAccessTokenRequest( code );
+	// 		it( "can build the request token url", function(){
+	// 			var code = "any-token";
+	// 			var tokenResponse = provider.makeAccessTokenRequest( code );
 
-		// 			expect( tokenResponse.content.getRequest().getBody() ).toInclude( code );
-		// 		} );
-		// 	} );
-		// } );
+	// 			expect( tokenResponse.content.getRequest().getBody() ).toInclude( code );
+	// 		} );
+	// 	} );
+	// } );
 	// }
 
 	/**
