@@ -32,7 +32,6 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 		// all your suites go here.
 		describe( "Google Specs", function(){
 			beforeEach( function( currentSpec ){
-				writeDump(var=variables.providerName);
 				provider = getProvider();
 			} );
 
