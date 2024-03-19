@@ -22,7 +22,7 @@ component
 	}
 
 	public string function buildAuthUrl(
-		required string access_type    = "online",
+		required string access_type    = "offline",
 		required string state          = false,
 		array scope                    = [ "openid profile" ],
 		boolean include_granted_scopes = true,
@@ -35,7 +35,7 @@ component
 			"scope"         : arrayToList( arguments.scope, " " ),
 			"redirect_uri"  : variables.redirectUri,
 			"state"         : arguments.state,
-			"access_type"   : "offline"
+			"access_type"   : arguments.access_type
 		};
 		if ( len( arguments.login_hint ) ) {
 			structInsert( authParams, "login_hint", arguments.login_hint );

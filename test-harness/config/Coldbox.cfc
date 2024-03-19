@@ -32,11 +32,11 @@
 			"oauth" : {
 				"providers" : [
 					"Google": {
-						clientId            : "***REMOVED***",
-						clientSecret        : "***REMOVED***",
-						authEndpoint        : "https://accounts.google.com/o/oauth2/v2/auth",
-						accessTokenEndpoint : "https://oauth2.googleapis.com/token",
-						redirectUri         : "http://localhost:8080/auth"
+						clientId            : getJavaSystem().getProperty( "GOOGLE_CLIENT_ID" ),
+						clientSecret        : getJavaSystem().getProperty( "GOOGLE_CLIENT_SECRET" ),
+						authEndpoint        : getJavaSystem().getProperty( "GOOGLE_AUTH_ENDPOINT" ),
+						accessTokenEndpoint : getJavaSystem().getProperty( "GOOGLE_ACCESS_TOKEN" ),
+						redirectUri         : getJavaSystem().getProperty( "GOOGLE_REDIRECT_URI" )
 					}
 				]
 			}

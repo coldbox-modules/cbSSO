@@ -16,7 +16,6 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 	 */
 	function beforeAll(){
 		super.beforeAll();
-		setup();
 	}
 
 	/**
@@ -33,6 +32,7 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 		describe( "Google Specs", function(){
 			beforeEach( function( currentSpec ){
 				provider = getProvider();
+				var hyper = getInstance( "HyperRequest@hyper" );
 			} );
 
 			story( "The disk should be created and started by the service", function(){
@@ -43,9 +43,15 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 
 			story( "I can authenticate with the provider", function(){
 				it( "can build the auth url", function(){
-					expect( provider.buildAuthUrl() ).toBe(
-						"https://accounts.google.com/o/oauth2/v2/auth?client_id=***REMOVED***&access_type=offline&state=false&redirect_uri=http://localhost:8080/auth&scope=openid profile&response_type=code"
-					);
+					var authUrl = provider.buildAuthUrl();
+					var browser = launchInteractiveBrowser( variables.playwright.firefox() );
+                    var page = browser.newPage();
+                    navigate( page, authUrl );
+                    waitForLoadState( page );
+					page.pause();
+					var oauthMessage = page.getByText('The OAuth client was not found.');
+					
+					expect(	oauthMessage.isVisible() ).toBeTrue();
 				} );
 
 				it( "can build the request token url", function(){

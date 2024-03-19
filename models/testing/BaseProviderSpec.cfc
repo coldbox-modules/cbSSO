@@ -1,11 +1,13 @@
 /**
  * Disk Service Spec
  */
-component extends="coldbox.system.testing.BaseTestCase" {
+component extends="cbPlaywright.models.ColdBoxPlaywrightTestCase" {
+
 
 	this.loadColdbox   = true;
 	// Unload Coldbox after this spec, since we are doing a shutdown of all disks
 	this.unLoadColdBox = true;
+	this.autowire = true;
 
 	variables.provider = "";
 
@@ -28,7 +30,7 @@ component extends="coldbox.system.testing.BaseTestCase" {
 
 	/*********************************** BDD SUITES ***********************************/
 
-	// function run( testResults, testBox ){
+	// function   run( testResults, testBox ){
 	// all your suites go here.
 	// describe( "Google Specs", function(){
 	// 	beforeEach( function( currentSpec ){

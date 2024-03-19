@@ -36,6 +36,19 @@ component {
 	this.mappings[ "/moduleroot" ]            = moduleRootPath;
 	this.mappings[ "/#request.MODULE_NAME#" ] = moduleRootPath & "#request.MODULE_PATH#";
 
+	this.javaSettings = {
+		loadPaths: directoryList(
+			rootPath &  "modules/cbPlaywright/lib",
+			true,
+			"array",
+			"*jar"
+		),
+		loadColdFusionClassPath: true,
+		reloadOnChange: false
+	};
+
+	this.mappings[ "/cbPlaywright" ] = rootPath & "/modules/cbPlaywright";
+
 	// ORM Definitions
 	/**
 	this.datasource = "coolblog";
