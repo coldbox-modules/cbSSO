@@ -34,8 +34,6 @@
 					"Google": {
 						clientId            : getJavaSystem().getProperty( "GOOGLE_CLIENT_ID" ),
 						clientSecret        : getJavaSystem().getProperty( "GOOGLE_CLIENT_SECRET" ),
-						authEndpoint        : getJavaSystem().getProperty( "GOOGLE_AUTH_ENDPOINT" ),
-						accessTokenEndpoint : getJavaSystem().getProperty( "GOOGLE_ACCESS_TOKEN" ),
 						redirectUri         : getJavaSystem().getProperty( "GOOGLE_REDIRECT_URI" )
 					}
 				]

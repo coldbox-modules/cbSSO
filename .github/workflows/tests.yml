@@ -60,6 +60,15 @@ jobs:
       #    printf "DB_BUNDLEVERSION=8.0.19\n" >> .env
       #    printf "DB_BUNDLENAME=com.mysql.cj\n" >> .env
 
+      - name: "Setup Environment Variables For Tests"
+        id: current_version
+        run: |
+          # master or snapshot
+          echo "Github Ref is $GITHUB_REF"
+          echo "GOOGLE_CLIENT_ID=new_google_id" >> $GITHUB_ENV
+          echo "GOOGLE_CLIENT_SECRET=google_secret" >> $GITHUB_ENV
+          echo "GOOGLE_REDIRECT_URI=redirect_uri_val" >> $GITHUB_ENV
+
       - name: Install Test Harness with ColdBox ${{ matrix.coldboxVersion }}
         run: |
           box install
