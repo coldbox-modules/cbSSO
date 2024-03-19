@@ -31,7 +31,7 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 		// all your suites go here.
 		describe( "Google Specs", function(){
 			beforeEach( function( currentSpec ){
-				provider = getProvider();
+				provider  = getProvider();
 				var hyper = getInstance( "HyperRequest@hyper" );
 			} );
 
@@ -45,13 +45,13 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 				it( "can build the auth url", function(){
 					var authUrl = provider.buildAuthUrl();
 					var browser = launchInteractiveBrowser( variables.playwright.firefox() );
-                    var page = browser.newPage();
-                    navigate( page, authUrl );
-                    waitForLoadState( page );
+					var page    = browser.newPage();
+					navigate( page, authUrl );
+					waitForLoadState( page );
 					page.pause();
-					var oauthMessage = page.getByText('The OAuth client was not found.');
-					
-					expect(	oauthMessage.isVisible() ).toBeTrue();
+					var oauthMessage = page.getByText( "The OAuth client was not found." );
+
+					expect( oauthMessage.isVisible() ).toBeTrue();
 				} );
 
 				it( "can build the request token url", function(){

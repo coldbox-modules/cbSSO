@@ -3,11 +3,10 @@
  */
 component extends="cbPlaywright.models.ColdBoxPlaywrightTestCase" {
 
-
 	this.loadColdbox   = true;
 	// Unload Coldbox after this spec, since we are doing a shutdown of all disks
 	this.unLoadColdBox = true;
-	this.autowire = true;
+	this.autowire      = true;
 
 	variables.provider = "";
 
