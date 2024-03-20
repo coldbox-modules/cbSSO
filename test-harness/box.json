@@ -1,0 +1,22 @@
+{
+    "name":"Tester",
+    "version":"0.0.0",
+    "slug":"tester",
+    "private":true,
+    "description":"",
+    "dependencies":{
+        "coldbox":"^6.0.0"
+    },
+    "devDependencies":{
+        "testbox":"*",
+        "cbPlaywright": "^1.33.2"
+    },
+    "installPaths":{
+        "coldbox":"coldbox/",
+        "testbox":"testbox/",
+        "cbPlaywright":"modules/cbPlaywright/"
+    },
+    "testbox":{
+        "runner":"http://localhost:60299/tests/runner.cfm"
+    }
+}

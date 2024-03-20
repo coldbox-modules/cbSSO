@@ -1,0 +1,62 @@
+{
+    "name":"ColdBox Single Sign-On",
+    "version":"1.0.0",
+    "location":"https://downloads.ortussolutions.com/ortussolutions/coldbox-modules/cbSSO/@build.version@/cbSSO-@build.version@.zip",
+    "author":"Ortus Solutions <info@ortussolutions.com>",
+    "homepage":"https://github.com/coldbox-modules/cbSSO",
+    "documentation":"https://github.com/coldbox-modules/cbSSO",
+    "repository":{
+        "type":"git",
+        "url":"https://github.com/coldbox-modules/cbSSO "
+    },
+    "bugs":"https://github.com/coldbox-modules/cbSSO",
+    "shortDescription":"This module will make Single Sign-On easier to implement in a server side application",
+    "slug":"cbSSO",
+    "type":"modules",
+    "license":[
+        {
+            "type":"Apache2",
+            "url":"http://www.apache.org/licenses/LICENSE-2.0.html"
+        }
+    ],
+    "contributors":[
+        "Alejandro Herrera <aherrera@ortussolutions.com>"
+	],
+    "dependencies":{
+        "hyper":"^7.2.1"
+    },
+    "devDependencies":{
+        "commandbox-cfformat":"*",
+        "commandbox-docbox":"*",
+        "commandbox-dotenv":"*",
+        "commandbox-cfconfig":"*"
+    },
+    "ignore":[
+        "**/.*",
+        "test-harness",
+        "/server*.json"
+    ],
+    "testbox":{
+        "runner":"http://localhost:60299/tests/runner.cfm"
+    },
+    "scripts":{
+        "build:module":"task run taskFile=build/Build.cfc :projectName=`package show slug` :version=`package show version`",
+        "build:docs":"task run taskFile=build/Build.cfc target=docs :projectName=`package show slug` :version=`package show version`",
+        "release":"recipe build/release.boxr",
+        "format":"cfformat run helpers,models,test-harness/tests/,ModuleConfig.cfc --overwrite",
+        "format:watch":"cfformat watch helpers,models,test-harness/tests/,ModuleConfig.cfc ./.cfformat.json",
+        "format:check":"cfformat check helpers,models,test-harness/tests/,ModuleConfig.cfc ./.cfformat.json",
+		"start:lucee" : "server start serverConfigFile=server-lucee@5.json",
+		"start:2018" : "server start serverConfigFile=server-adobe@2018.json",
+		"start:2021" : "server start serverConfigFile=server-adobe@2021.json",
+		"stop:lucee" : "server stop serverConfigFile=server-lucee@5.json",
+		"stop:2018" : "server stop serverConfigFile=server-adobe@2018.json",
+		"stop:2021" : "server stop serverConfigFile=server-adobe@2021.json",
+		"logs:lucee" : "server log serverConfigFile=server-lucee@5.json --follow",
+		"logs:2018" : "server log serverConfigFile=server-adobe@2018.json --follow",
+		"logs:2021" : "server log serverConfigFile=server-adobe@2021.json --follow"
+    },
+    "installPaths":{
+        "hyper":"modules/hyper/"
+    }
+}
