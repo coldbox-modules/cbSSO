@@ -32,8 +32,8 @@ component {
 	 */
 	function configure(){
 		settings = {
-			errorRedirect: "/",
-			successRedirect: "/",
+			errorRedirect: "",
+			successRedirect: "",
 			providers : [
 				// Your google login API credentials
 				"google": {

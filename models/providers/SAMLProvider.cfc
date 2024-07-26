@@ -30,27 +30,7 @@ component
     }
 
     public string function startAuthenticationWorflow( required any event ){
-        var id = "id" & createUUID();
-        var inputString = '<samlp:AuthnRequest
-        xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
-        ID="#id#"
-        Version="2.0" IssueInstant="#now().datetimeFormat( "yyyy-mm-dd'T'HH:nn:ss.lZ" )#"
-        xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">
-        <Issuer xmlns="urn:oasis:names:tc:SAML:2.0:assertion">#variables.clientId#</Issuer>
-      </samlp:AuthnRequest>';
-      
-        // deflate and base64 encode
-        var output = createObject( "java", "java.nio.ByteBuffer" ).allocate( 1024 ).array();
-        var a = createObject( "java", "java.util.zip.Deflater" );
-        var compresser = createObject( "java", "java.util.zip.Deflater" ).init( a[ "DEFAULT_COMPRESSION"], true);
-        compresser.setStrategy( compresser[ "DEFAULT_STRATEGY" ] );
-        compresser.setInput(javaCast( "string", inputString).getBytes( "UTF-8" ));
-        compresser.finish();
-        var compressedDataLength = compresser.deflate(output);
-        compresser.end();
-
-        output = javaCast( "byte[]", ArraySlice( output, 1, compressedDataLength ) );
-        var encoded = encodeForURL( binaryEncode( output, "base64") );
+        var encoded = encodeForURL( deflateAndBase64Enocde( getRawSAMLRequest() ) );
 
         return "#variables.authEndpoint#?SAMLRequest=#encoded#";
     }
@@ -80,12 +60,35 @@ component
                 .setRawResponseData( data );
         }
         catch( any e ){
-            writeDUmp( e );
-            abort;
             return authResponse
                 .setWasSuccessful( false )
                 .setErrorMessage( e.message );
         }
+    }
+
+    private string function getRawSAMLRequest(){
+        var id = "id" & createUUID();
+        return '<samlp:AuthnRequest
+        xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
+        ID="#id#"
+        Version="2.0" IssueInstant="#now().datetimeFormat( "yyyy-mm-dd'T'HH:nn:ss.lZ" )#"
+        xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">
+        <Issuer xmlns="urn:oasis:names:tc:SAML:2.0:assertion">#variables.clientId#</Issuer>
+      </samlp:AuthnRequest>';
+    }
+
+    private string function deflateAndBase64Enocde( required string inputString ){
+        var output = createObject( "java", "java.nio.ByteBuffer" ).allocate( 1024 ).array();
+        var Deflater = createObject( "java", "java.util.zip.Deflater" );
+        var compresser = Deflater.init( Deflater[ "DEFAULT_COMPRESSION"], true);
+        compresser.setStrategy( compresser[ "DEFAULT_STRATEGY" ] );
+        compresser.setInput(javaCast( "string", inputString).getBytes( "UTF-8" ));
+        compresser.finish();
+        var compressedDataLength = compresser.deflate(output);
+        compresser.end();
+
+        output = javaCast( "byte[]", ArraySlice( output, 1, compressedDataLength ) );
+        return binaryEncode( output, "base64" );
     }
 
     private boolean function detectSuccess( required xmlDoc ){

@@ -7,7 +7,7 @@ component {
 
         if( isNull( provider ) ){
             // TODO add interception point to handle missing provider
-            event.relocate( moduleSettings.errorRedirect );
+            relocate( moduleSettings.errorRedirect );
         }
 
         relocate( url = provider.startAuthenticationWorflow( event ) );
@@ -18,7 +18,7 @@ component {
 
         if( isNull( provider ) ){
             // TODO add interception point to handle missing provider
-            event.relocate( moduleSettings.errorRedirect );
+            relocate( moduleSettings.errorRedirect );
         }
 
         var ssoAuthorizationEvent = provider.processAuthorizationEvent( event );
@@ -29,7 +29,7 @@ component {
         } );
 
         // TODO this should probably be a module setting
-        event.relocate( moduleSettings.successRedirect );
+        relocate( moduleSettings.successRedirect );
     }
 
 }
