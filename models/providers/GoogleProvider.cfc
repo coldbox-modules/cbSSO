@@ -1,83 +1,95 @@
 component
-	singleton
-	threadsafe
 	accessors="true"
-	extends  ="oAuth.models.BaseProvider"
+	implements  = "oAuth.models.ISSOIntegrationProvider"
 {
 
-	property name="moduleSettings" inject="coldbox:ModuleSettings:oauth";
+	property name = "Name";
+    property name = "clientId";
+    property name = "clientSecret";
+    property name = "authEndpoint";
+    property name = "accessTokenEndpoint";
+    property name = "redirectUri";
 
-	/**
-	 * onDIComplete
-	 */
-	function onDIComplete(){
-		var providerSettings = moduleSettings.providers.google;
+    property name="oAuthService" inject="oAuthService@oauth";
+    property name="wirebox" inject="wirebox";
 
-		variables.name                = "Google";
-		variables.clientId            = providerSettings.clientId;
-		variables.clientSecret        = providerSettings.clientSecret;
-		variables.authEndpoint        = providerSettings.authEndpoint;
-		variables.accessTokenEndpoint = providerSettings.accessTokenEndpoint;
-		variables.redirectUri         = providerSettings.redirectUri;
-	}
+    public string function getName() {
+        return variables.name;
+    }
 
-	public string function buildAuthUrl(
-		required string access_type    = "offline",
-		required string state          = false,
-		array scope                    = [ "openid profile" ],
-		boolean include_granted_scopes = true,
-		string login_hint              = "",
-		string prompt                  = ""
-	){
-		var authParams = {
-			"client_id"     : variables.clientId,
-			"response_type" : "code",
-			"scope"         : arrayToList( arguments.scope, " " ),
-			"redirect_uri"  : variables.redirectUri,
-			"state"         : arguments.state,
-			"access_type"   : arguments.access_type
-		};
-		if ( len( arguments.login_hint ) ) {
-			structInsert( authParams, "login_hint", arguments.login_hint );
-		}
-		if ( len( arguments.prompt ) ) {
-			structInsert( authParams, "prompt", arguments.prompt );
-		}
-		return super.buildAuthUrl( authParams, false );
-	}
+    public string function getIconURL(){
+        return "";
+    }
 
-	/**
-	 * I make the HTTP request to obtain the access token.
-	 *
-	 * @code The code returned from the authentication request.
-	 **/
-	public struct function makeAccessTokenRequest( required String code ){
-		var aFormFields = [];
-		return super.makeAccessTokenRequest( arguments.code, aFormFields );
-	}
+    public any function populateFromSettings( required struct settings ){
+        variables.Name = settings.Name;
+        variables.clientId = settings.clientId;
+        variables.clientSecret = settings.clientSecret;
+        variables.authEndpoint = settings.authEndpoint;
+        variables.accessTokenEndpoint = settings.accessTokenEndpoint;
+        variables.redirectUri = settings.redirectUri;
 
-	/**
-	 * Get user by token
-	 */
-	function getUserByToken( token ){
-		var hyper    = hyper.new();
-		var response = hyper.post(
-			"https://www.googleapis.com/plus/v1/people/me?prettyPrint=false",
-			{
-				headers : {
-					"Accept-Type"   : "application/json",
-					"Authorization" : "Bearer #arguments.token.access_token#"
-				}
-			}
-		);
-		var stuResponse = {};
-		if ( response.isSuccess() ) {
-			stuResponse = deserializeJSON( response.filecontent );
-		} else {
-			stuResponse.success = false;
-			stuResponse.content = response.getStatusText();
-		}
-		return stuResponse;
-	}
+        return this;
+    }
+
+    public string function startAuthenticationWorflow( required any event ){
+        return oAuthService.buildAuthUrl(
+            authEndpoint = getAuthEndpoint(),
+            client_id = getClientId(),
+            redirect_uri = getRedirectUri(),
+            response_type = "code",
+            extraParams = {
+                "scope": "openid profile email"
+            }
+        );
+    }
+
+    public any function processAuthorizationEvent( required any event ){
+        var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@oauth" );
+
+        try {
+            var rawData = {
+                "authResponse": event.getCollection()
+            };
+
+            if( event.getValue( "error", "" ) != "" ){
+                return authResponse
+                    .setRawResponseData( rawData )
+                    .setWasSuccessful( false )
+                    .setErrorMessage( event.getValue( "error" ) );
+            }
+
+            var res = oAuthService.makeAccessTokenRequest(
+                getClientId(),
+                getClientSecret(),
+                getRedirectUri(),
+                getAccessTokenEndpoint(),
+                event.getValue( "code" )
+            );
+
+            var accessData = deserializeJSON( res.getData() );
+            rawData[ "accessResponse" ] = accessData;
+
+            var idTokenData = parseIDToken( accessData.id_token );
+            rawData[ "parsedIdToken" ] = idTokenData;
+
+            return authResponse
+                .setRawResponseData( rawData )
+                .setWasSuccessful( true )
+                .setFirstName( idTokenData.given_name )
+                .setLastName( idTokenData.family_name )
+                .setEmail( idTokenData.email )
+                .setUserId( idTokenData.sub )
+        }
+        catch( any e ){
+            return authResponse
+                .setWasSuccessful( false )
+                .setErrorMessage( e.message );
+        }        
+    }
+
+    private struct function parseIDToken( required string idToken ){
+        return deserializeJSON( charsetEncode( binaryDecode( listGetAt( idToken, 2, "." ), "base64" ), "utf-8" ) );
+    }
 
 }

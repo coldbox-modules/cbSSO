@@ -67,7 +67,7 @@ component accessors="true" {
 
 		if ( response.isSuccess() ) {
 			stuResponse.success = true;
-			stuResponse.content = response.getBody();
+			stuResponse.content = response.getData();
 		} else {
 			stuResponse.success = false;
 			stuResponse.content = response;
@@ -113,7 +113,7 @@ component accessors="true" {
 
 		if ( response.isSuccess() ) {
 			stuResponse.success = true;
-			stuResponse.content = response.getBody();
+			stuResponse.content = response.getData();
 		} else {
 			stuResponse.success = false;
 			stuResponse.content = response.getStatusText();
@@ -166,7 +166,7 @@ component accessors="true" {
 					queryStr &= "&";
 				}
 
-				queryStr &= lCase( key ) & "=" & trim( arguments.args[ key ] );
+				queryStr &= lCase( key ) & "=" & encodeForURL( trim( arguments.args[ key ] ) );
 				intCount++;
 			}
 		}

@@ -31,10 +31,22 @@
 		moduleSettings = {
 			"oauth" : {
 				"providers" : [
-					"Google": {
+					{
+						name: "google",
+						type: "GoogleProvider@oauth",
 						clientId            : getJavaSystem().getProperty( "GOOGLE_CLIENT_ID" ),
 						clientSecret        : getJavaSystem().getProperty( "GOOGLE_CLIENT_SECRET" ),
+						authEndpoint        : getJavaSystem().getProperty( "GOOGLE_AUTH_ENDPOINT" ),
+						accessTokenEndpoint        : getJavaSystem().getProperty( "GOOGLE_ACCESS_TOKEN" ),
 						redirectUri         : getJavaSystem().getProperty( "GOOGLE_REDIRECT_URI" )
+					},
+					{
+						name: "entra",
+						type: "SAMLProvider@oauth",
+						clientId            : getJavaSystem().getProperty( "MS_ENTRA_CLIENT_ID" ),
+						clientSecret        : getJavaSystem().getProperty( "MS_ENTRA_CLIENT_SECRET" ),
+						authEndpoint        : getJavaSystem().getProperty( "MS_ENTRA_SIGN_ON_ENDPOINT" ),
+						redirectUri         : getJavaSystem().getProperty( "MS_ENTRA_REDIRECT_URI" )
 					}
 				]
 			}

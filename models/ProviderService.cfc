@@ -8,60 +8,46 @@ component accessors="true" singleton threadsafe {
 
 	property name="providers" type="struct";
 
-
-	/**
-	 * Constructor
-	 */
-	function init(){
-		// Init the providers
-		variables.providers = {};
-		return this;
-	}
+	variables.providers = {};
 
 	ProviderService function registerProviders(){
-		variables.moduleSettings.providers.each( function( providerName, providerDefinition ){
-			param name="arguments.providerDefinition.properties" default="#structNew()#";
-			register( provider: arguments.providerName );
+		variables.moduleSettings.providers.each( function( providerDefinition ){
+			var provider = wirebox.getInstance( providerDefinition.type );
+
+			provider.populateFromSettings( providerDefinition );
+
+			providers[ provider.getName() ] = provider;
 		} );
 		return this;
 	}
 
-	ProviderService function register(
-		required provider,
-		struct properties = {},
-		boolean override  = false
-	){
-		// If it doesn't exist or we are overriding, register it
-		if ( !variables.providers.keyExists( arguments.provider ) || arguments.override ) {
-			variables.providers[ arguments.provider ] = {
-				"name"         : arguments.provider,
-				"registeredOn" : now(),
-				"provider"     : javacast( "null", "" ),
-				"createdOn"    : ""
-			};
-			log.info( "- Registered (#arguments.provider#:#arguments.provider#) provider." );
-		} else {
-			log.warn( "- Ignored registration for (#arguments.provider#) provider as it was already registered." );
-		}
-
-		return this;
+	public array function getRenderableProviderData(){
+		return variables.providers
+			.keyArray()
+			.map( (name) => {
+				var provider = variables.providers[ name ];
+				return {
+					"name": provider.getName(),
+					"iconURL": provider.getIconURL(),
+					"url": "/oauth/auth/#provider.getName()#/start"
+				};
+			});
 	}
 
-	function get( required name ){
-		var providerRecord = getProviderRecord( arguments.name );
-
-		// Lazy load the disk instance
-		if ( isNull( providerRecord.provider ) ) {
-			lock name="oauth-createProvider-#arguments.name#" type="exclusive" timeout="10" throwOnTimeout="true" {
-				if ( isNull( providerRecord.provider ) ) {
-					log.debug( "Provider (#arguments.name#) not built, building it now." );
+	public any function getAllProviders(){
+		return variables.providers.valueArray()
+			.map( ( providerRecord ) => {
+				if( isNull( providerRecord.provider) ){
 					providerRecord.provider  = buildProvider( provider: providerRecord.name );
 					providerRecord.createdOn = now();
 				}
-			}
-		}
 
-		return providerRecord.provider;
+				return providerRecord.provider;
+			});
+	}
+
+	function get( required name ){
+		return variables.providers[ name ];
 	}
 
 	struct function getProviderRecord( required name ){

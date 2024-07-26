@@ -14,18 +14,26 @@ component {
 
 	// Model Namespace
 	this.modelNamespace = "oAuth";
-
+	this.autoMapModels = true;
 	// CF Mapping
 	this.cfmapping = "oauth";
+	this.entryPoint = "/oauth";
 
 	// Dependencies
-	this.dependencies = [ "hyper" ];
+	this.dependencies = [ "hyper"];
+
+	routes = [
+		{ pattern: "/auth/:providerName/start", handler: "Auth", action: "start" },
+		{ pattern: "/auth/:providerName", handler: "Auth", action: "authorize" }
+	];
 
 	/**
 	 * Configure Module
 	 */
 	function configure(){
 		settings = {
+			errorRedirect: "/",
+			successRedirect: "/",
 			providers : [
 				// Your google login API credentials
 				"google": {
