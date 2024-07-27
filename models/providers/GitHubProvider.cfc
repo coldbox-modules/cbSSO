@@ -7,17 +7,20 @@ component
     property name = "clientId";
     property name = "clientSecret";
     property name = "authEndpoint";
+    property name = "userInfoURL";
     property name = "accessTokenEndpoint";
     property name = "redirectUri";
-    property name = "scope";
+    property name = "Scope";
 
     property name="oAuthService" inject="oAuthService@oauth";
     property name="wirebox" inject="wirebox";
+    property name="hyper" inject="HyperBuilder@hyper";
 
-    variables.Name = "Google";
-    variables.scope = "openid profile email";
-    variables.authEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
-    variables.accessTokenEndpoint = "https://oauth2.googleapis.com/token";
+    variables.name = "GitHub";
+    variables.scope = "user user:email";
+    variables.userInfoURL = "https://api.github.com/user";
+    variables.authEndpoint = "https://github.com/login/oauth/authorize";
+    variables.accessTokenEndpoint = "https://github.com/login/oauth/access_token";
 
     public string function getName() {
         return variables.name;
@@ -51,15 +54,18 @@ component
 
     public any function processAuthorizationEvent( required any event ){
         var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@oauth" );
+        var rawData = {
+            "authResponse": {},
+            "accessResponse": {},
+            "userData": {}
+        };
+        authResponse.setRawResponseData( rawData );
 
         try {
-            var rawData = {
-                "authResponse": event.getCollection()
-            };
+            rawData[ "authResponse" ] = event.getCollection();
 
             if( event.getValue( "error", "" ) != "" ){
                 return authResponse
-                    .setRawResponseData( rawData )
                     .setWasSuccessful( false )
                     .setErrorMessage( event.getValue( "error" ) );
             }
@@ -72,19 +78,23 @@ component
                 event.getValue( "code" )
             );
 
-            var accessData = deserializeJSON( res.getData() );
+            var accessData = parseAccessData( res.getData().toString() );
             rawData[ "accessResponse" ] = accessData;
 
-            var idTokenData = parseIDToken( accessData.id_token );
-            rawData[ "parsedIdToken" ] = idTokenData;
+            var userDataRes = hyper
+                .setMethod( "GET" )
+                .setUrl( variables.userInfoURL )
+                .setHeaders( { "Authorization": "Bearer " & accessData.access_token } )
+                .send();
 
+            var userData = deserializeJSON( userDataRes.getData() );
+            rawData[ "userData" ] = userData;
+            
             return authResponse
-                .setRawResponseData( rawData )
                 .setWasSuccessful( true )
-                .setFirstName( idTokenData.given_name )
-                .setLastName( idTokenData.family_name )
-                .setEmail( idTokenData.email )
-                .setUserId( idTokenData.sub )
+                .setName( userData.name )
+                .setEmail( userData.email )
+                .setUserId( userData.id )
         }
         catch( any e ){
             return authResponse
@@ -93,8 +103,15 @@ component
         }        
     }
 
-    private struct function parseIDToken( required string idToken ){
-        return deserializeJSON( charsetEncode( binaryDecode( listGetAt( idToken, 2, "." ), "base64" ), "utf-8" ) );
+    private struct function parseAccessData( required string accessData ){
+        return listToArray( accessData, '&' )
+            .reduce( ( acc, item ) => {
+                var entry = listToArray( item, "=" );
+
+                acc[ urlDecode( entry[ 1 ] ) ] = urlDecode( entry[ 2 ] );
+
+                return acc;
+            }, {} );
     }
 
 }

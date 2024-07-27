@@ -6,10 +6,11 @@ component
     property name = "clientId";
     property name = "clientSecret";
     property name = "authEndpoint";
-    property name = "accessTokenEndpoint";
     property name = "redirectUri";
 
     property name="wirebox" inject="wirebox";
+
+    variables.name = "Microsoft Entra";
 
     public string function getName() {
         return variables.name;
@@ -19,6 +20,16 @@ component
         return "";
     }
 
+    public string function getRedirectUri(){
+        if( !isNull( variables.redirectUri ) ){
+            return variables.redirectUri;
+        }
+
+        var protocol = cgi.HTTPS == "" ? "http://" : "https://";
+
+        return "#protocol##cgi.HTTP_HOST#/oauth/auth/#variables.name.lcase()#";
+    }
+    
     public any function populateFromSettings( required struct settings ){
         variables.Name = settings.Name;
         variables.clientId = settings.clientId;
@@ -41,6 +52,8 @@ component
         try {
             var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
             var data = charsetEncode( decoded, "utf-8" );
+            writeDUmp( data );
+            abort;
             var xmlData = xmlParse( data.reREplace( 'xmlns=".+?"', '', "all" ) );
             authResponse.setRawResponseData( data );
 

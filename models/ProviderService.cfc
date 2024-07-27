@@ -14,7 +14,13 @@ component accessors="true" singleton threadsafe {
 		variables.moduleSettings.providers.each( function( providerDefinition ){
 			var provider = wirebox.getInstance( providerDefinition.type );
 
-			provider.populateFromSettings( providerDefinition );
+			for( var setting in providerDefinition ){
+				if( !structKeyExists( provider, "set#setting#" ) ){
+					continue;
+				}
+
+				invoke( provider, "set#setting#", [ providerDefinition[ setting ] ] );
+			}
 
 			providers[ provider.getName() ] = provider;
 		} );

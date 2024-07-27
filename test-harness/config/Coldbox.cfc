@@ -32,21 +32,30 @@
 			"oauth" : {
 				"providers" : [
 					{
-						name: "google",
+						type: "CustomProvider"
+					},
+					{
+						// name: "google",
 						type: "GoogleProvider@oauth",
 						clientId            : getJavaSystem().getProperty( "GOOGLE_CLIENT_ID" ),
-						clientSecret        : getJavaSystem().getProperty( "GOOGLE_CLIENT_SECRET" ),
-						authEndpoint        : getJavaSystem().getProperty( "GOOGLE_AUTH_ENDPOINT" ),
-						accessTokenEndpoint        : getJavaSystem().getProperty( "GOOGLE_ACCESS_TOKEN" ),
-						redirectUri         : getJavaSystem().getProperty( "GOOGLE_REDIRECT_URI" )
+						clientSecret        : getJavaSystem().getProperty( "GOOGLE_CLIENT_SECRET" )
+					},
+					{
+						type: "GitHubProvider@oauth",
+						clientId            : getJavaSystem().getProperty( "GITHUB_CLIENT_ID" ),
+						clientSecret        : getJavaSystem().getProperty( "GITHUB_CLIENT_SECRET" )
+					},
+					{
+						type: "FacebookProvider@oauth",
+						clientId            : getJavaSystem().getProperty( "FACEBOOK_CLIENT_ID" ),
+						clientSecret        : getJavaSystem().getProperty( "FACEBOOK_CLIENT_SECRET" )
 					},
 					{
 						name: "entra",
-						type: "SAMLProvider@oauth",
+						type: "MicrosoftSAMLProvider@oauth",
 						clientId            : getJavaSystem().getProperty( "MS_ENTRA_CLIENT_ID" ),
 						clientSecret        : getJavaSystem().getProperty( "MS_ENTRA_CLIENT_SECRET" ),
-						authEndpoint        : getJavaSystem().getProperty( "MS_ENTRA_SIGN_ON_ENDPOINT" ),
-						redirectUri         : getJavaSystem().getProperty( "MS_ENTRA_REDIRECT_URI" )
+						authEndpoint        : getJavaSystem().getProperty( "MS_ENTRA_SIGN_ON_ENDPOINT" )
 					}
 				]
 			}

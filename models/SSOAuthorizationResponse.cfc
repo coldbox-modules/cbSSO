@@ -3,6 +3,7 @@ component implements="oauth.models.ISSOAuthorizationResponse" accessors = true {
     property name="SessionId";
     property name="UserId";
     property name="Email";
+    property name="Name";
     property name="FirstName";
     property name="LastName";
     property name="RawResponseData";
@@ -19,6 +20,9 @@ component implements="oauth.models.ISSOAuthorizationResponse" accessors = true {
     }
     public string function getEmail(){
         return variables.Email;
+    }
+    public string function getName(){
+        return variables.FirstName;
     }
     public string function getFirstName(){
         return variables.FirstName;
