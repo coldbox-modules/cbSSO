@@ -1,6 +1,7 @@
  component accessors="true" {
 
 	property name="hyper" inject="HyperBuilder@hyper";
+    property name="jwt" inject="jwt@jwtcfml";
 
 	
 	public string function buildAuthUrl(
@@ -27,6 +28,22 @@
 		return authEndpoint & "?" & structToQueryString( params );
 	}
 
+	public struct function decodeJWT( required string idToken, required string jwksURL ){
+        var keys = getJWTKeys( jwksURL );
+
+        for( var key in keys ){
+            try {
+                return jwt.decode( idToken, key, "RS256" );
+            }
+            catch( any e ){
+                // pass
+            }
+        }
+
+        throw( "Invalid JWT Token", "InvalidJWT" );
+    }
+
+    
 
 	/**
 	 * I make the HTTP request to obtain the access token.
@@ -113,5 +130,12 @@
 
 		return arrayToList( params, "&" );
 	}
+
+	private array function getJWTKeys( required string jwksURL ){
+        return hyper.new()
+            .setUrl( jwksURL )
+            .send()
+            .json().keys;
+    }
 
 }

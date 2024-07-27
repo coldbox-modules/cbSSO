@@ -22,7 +22,8 @@
     ],
     "contributors":[],
     "dependencies":{
-        "hyper":"^7.2.1"
+        "hyper":"^7.2.1",
+        "jwt-cfml":"^1.2.0"
     },
     "devDependencies":{
         "commandbox-cfformat":"*",
@@ -58,6 +59,7 @@
         "runner":"http://localhost:60299/tests/runner.cfm"
     },
     "installPaths":{
-        "hyper":"modules/hyper/"
+        "hyper":"modules/hyper/",
+        "jwt-cfml":"modules/jwtcfml/"
     }
 }

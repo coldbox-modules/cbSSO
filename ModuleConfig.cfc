@@ -20,7 +20,7 @@ component {
 	this.entryPoint = "/oauth";
 
 	// Dependencies
-	this.dependencies = [ "hyper"];
+	this.dependencies = [ "hyper", "jwtcfml" ];
 
 	routes = [
 		{ pattern: "/auth/:providerName/start", handler: "Auth", action: "start" },

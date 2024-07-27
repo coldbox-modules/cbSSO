@@ -18,6 +18,7 @@ component
     variables.scope = "openid profile email";
     variables.authEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
     variables.accessTokenEndpoint = "https://oauth2.googleapis.com/token";
+    variables.jkwsEndpoint = "https://www.googleapis.com/oauth2/v3/certs";
 
     public string function getName() {
         return variables.name;
@@ -75,7 +76,7 @@ component
             var accessData = deserializeJSON( res.getData() );
             rawData[ "accessResponse" ] = accessData;
 
-            var idTokenData = parseIDToken( accessData.id_token );
+            var idTokenData = oAuthService.decodeJWT( accessData.id_token, variables.jkwsEndpoint );
             rawData[ "parsedIdToken" ] = idTokenData;
 
             return authResponse
@@ -92,9 +93,4 @@ component
                 .setErrorMessage( e.message );
         }        
     }
-
-    private struct function parseIDToken( required string idToken ){
-        return deserializeJSON( charsetEncode( binaryDecode( listGetAt( idToken, 2, "." ), "base64" ), "utf-8" ) );
-    }
-
 }

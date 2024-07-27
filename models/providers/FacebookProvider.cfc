@@ -20,6 +20,7 @@ component
     variables.scope = "openid email";
     variables.authEndpoint = "https://facebook.com/dialog/oauth/";
     variables.accessTokenEndpoint = "https://graph.facebook.com/v11.0/oauth/access_token";
+    variables.jkwsEndpoint = "https://limited.facebook.com/.well-known/oauth/openid/jwks/";
 
     public string function getName() {
         return variables.name;
@@ -80,7 +81,7 @@ component
 			var accessData = deserializeJSON( res.getData() );
             rawData[ "accessResponse" ] = accessData;
 
-            var idTokenData = parseIDToken( accessData.id_token );
+            var idTokenData = oAuthService.decodeJWT( accessData.id_token, variables.jkwsEndpoint );
             rawData[ "parsedIdToken" ] = idTokenData;
 
             return authResponse
@@ -96,10 +97,6 @@ component
                 .setWasSuccessful( false )
                 .setErrorMessage( e.message );
         }        
-    }
-
-    private struct function parseIDToken( required string idToken ){
-        return deserializeJSON( charsetEncode( binaryDecode( listGetAt( idToken, 2, "." ), "base64URL" ), "utf-8" ) );
     }
 
 }
