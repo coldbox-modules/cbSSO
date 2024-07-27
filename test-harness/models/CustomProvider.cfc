@@ -1,4 +1,4 @@
-component implements="oauth.models.ISSOIntegrationProvider" {
+component implements="cbsso.models.ISSOIntegrationProvider" {
     property name="wirebox" inject="wirebox";
 
     public string function getName(){
@@ -13,7 +13,7 @@ component implements="oauth.models.ISSOIntegrationProvider" {
     }
 
     public any function processAuthorizationEvent( required any event ){
-        var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@oauth" );
+        var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@cbsso" );
 
         return authResponse.setWasSuccessful( true );
     }

@@ -30,7 +30,7 @@ component extends="coldbox.system.testing.BaseTestCase" {
 		// all your suites go here.
 		describe( "Disk Service", function(){
 			beforeEach( function( currentSpec ){
-				service = getInstance( "ProviderService@oAuth" ).init();
+				service = getInstance( "ProviderService@cbsso" ).init();
 			} );
 
 			it( "can be created", function(){

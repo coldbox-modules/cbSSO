@@ -1,6 +1,6 @@
 component
 	accessors="true"
-	implements  = "oAuth.models.ISSOIntegrationProvider"
+	implements  = "cbsso.models.ISSOIntegrationProvider"
 {
 
 	property name = "Name";
@@ -12,7 +12,7 @@ component
     property name = "redirectUri";
     property name = "Scope";
 
-    property name="oAuthService" inject="oAuthService@oauth";
+    property name="oAuthService" inject="oAuthService@cbsso";
     property name="wirebox" inject="wirebox";
     property name="hyper" inject="HyperBuilder@hyper";
 
@@ -37,7 +37,7 @@ component
 
         var protocol = cgi.HTTPS == "" ? "http://" : "https://";
 
-        return "#protocol##cgi.HTTP_HOST#/oauth/auth/#variables.name.lcase()#";
+        return "#protocol##cgi.HTTP_HOST#/cbsso/auth/#variables.name.lcase()#";
     }
 
     public string function startAuthenticationWorflow( required any event ){
@@ -53,7 +53,7 @@ component
     }
 
     public any function processAuthorizationEvent( required any event ){
-        var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@oauth" );
+        var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@cbsso" );
         var rawData = {
             "authResponse": {},
             "accessResponse": {},

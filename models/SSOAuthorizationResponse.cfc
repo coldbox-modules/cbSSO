@@ -1,4 +1,4 @@
-component implements="oauth.models.ISSOAuthorizationResponse" accessors = true {
+component implements="cbsso.models.ISSOAuthorizationResponse" accessors = true {
     property name="wasSuccessful";
     property name="SessionId";
     property name="UserId";

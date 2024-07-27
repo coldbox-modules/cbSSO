@@ -66,11 +66,11 @@ component extends="cbPlaywright.models.ColdBoxPlaywrightTestCase" {
 	 */
 
 	function getProvider(){
-		return getInstance( "ProviderService@oAuth" ).get( variables.providerName );
+		return getInstance( "ProviderService@cbsso" ).get( variables.providerName );
 	}
 
 	function getProvidersList(){
-		return getInstance( "ProviderService@oAuth" ).names();
+		return getInstance( "ProviderService@cbsso" ).names();
 	}
 
 }

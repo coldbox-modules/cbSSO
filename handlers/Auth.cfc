@@ -1,6 +1,6 @@
 component {
-    property name = "ProviderService" inject = "ProviderService@oauth";
-    property name="moduleSettings" inject="coldbox:moduleSettings:oAuth";
+    property name = "ProviderService" inject = "ProviderService@cbsso";
+    property name="moduleSettings" inject="coldbox:moduleSettings:cbsso";
 
     public any function start( event, rc, prc ){
         var provider = ProviderService.get( event.getValue( "providerName", "" ) );

@@ -6,9 +6,9 @@
 component {
 
 	// The name of the module used in cfmappings ,etc
-	request.MODULE_NAME = "oAuth";
+	request.MODULE_NAME = "cbsso";
 	// The directory name of the module on disk. Usually, it's the same as the module name
-	request.MODULE_PATH = "oAuth";
+	request.MODULE_PATH = "cbsso";
 
 	// APPLICATION CFC PROPERTIES
 	this.name                 = "#request.MODULE_NAME# Testing Suite";

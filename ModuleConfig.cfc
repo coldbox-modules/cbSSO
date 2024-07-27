@@ -6,18 +6,18 @@
 component {
 
 	// Module Properties
-	this.title       = "oAuth";
+	this.title       = "cbSSO";
 	this.author      = "Ortus Solutions";
 	this.webURL      = "https://www.ortussolutions.com";
 	this.description = "@MODULE_DESCRIPTION@";
 	this.version     = "@build.version@+@build.number@";
 
 	// Model Namespace
-	this.modelNamespace = "oAuth";
+	this.modelNamespace = "cbsso";
 	this.autoMapModels = true;
 	// CF Mapping
-	this.cfmapping = "oauth";
-	this.entryPoint = "/oauth";
+	this.cfmapping = "cbsso";
+	this.entryPoint = "/cbsso";
 
 	// Dependencies
 	this.dependencies = [ "hyper", "jwtcfml" ];
@@ -36,21 +36,13 @@ component {
 			successRedirect: "",
 			providers : [
 				// Your google login API credentials
-				"google": {
-					clientId            : getSystemSetting( key = "GOOGLE_CLIENT_ID", defaultValue = "" ),
-					clientSecret        : getSystemSetting( key = "GOOGLE_CLIENT_SECRET", defaultValue = "" ),
-					authEndpoint        : "https://accounts.google.com/o/oauth2/v2/auth",
-					accessTokenEndpoint : "https://www.googleapis.com/oauth2/v4/token",
-					redirectUri         : getSystemSetting( key = "GOOGLE_REDIRECT_URI", defaultValue = "" )
-				},
-				// Your facebook login API credentials
-				"facebook": {
-					clientId            : getSystemSetting( key = "FACEBOOK_CLIENT_ID", defaultValue = "" ),
-					clientSecret        : getSystemSetting( key = "FACEBOOK_CLIENT_SECRET", defaultValue = "" ),
-					authEndpoint        : "https://www.facebook.com/v2.10/dialog/oauth",
-					accessTokenEndpoint : "https://graph.facebook.com/v2.10/oauth/access_token",
-					redirectUri         : getSystemSetting( key = "FACEBOOK_REDIRECT_URI", defaultValue = "" )
-				}
+				// "google": {
+				// 	clientId            : getSystemSetting( key = "GOOGLE_CLIENT_ID", defaultValue = "" ),
+				// 	clientSecret        : getSystemSetting( key = "GOOGLE_CLIENT_SECRET", defaultValue = "" ),
+				// 	authEndpoint        : "https://accounts.google.com/o/oauth2/v2/auth",
+				// 	accessTokenEndpoint : "https://www.googleapis.com/oauth2/v4/token",
+				// 	redirectUri         : getSystemSetting( key = "GOOGLE_REDIRECT_URI", defaultValue = "" )
+				// }
 			]
 		};
 	};
@@ -61,7 +53,7 @@ component {
 	 */
 	function onLoad(){
 		// Register all app disks
-		wirebox.getInstance( "ProviderService@oAuth" ).registerProviders();
+		wirebox.getInstance( "ProviderService@cbsso" ).registerProviders();
 	}
 
 	/**

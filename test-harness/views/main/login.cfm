@@ -1,6 +1,6 @@
 <cfoutput>
     <cfscript>
-        providers = getInstance( "ProviderService@oauth" );
+        providers = getInstance( "ProviderService@cbsso" );
         // writeDump( providers[1].buildAuthUrl() );
         // abort;
 

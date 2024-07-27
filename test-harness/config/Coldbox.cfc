@@ -29,30 +29,30 @@
 		};
 
 		moduleSettings = {
-			"oauth" : {
+			"cbsso" : {
 				"providers" : [
 					{
 						type: "CustomProvider"
 					},
 					{
 						// name: "google",
-						type: "GoogleProvider@oauth",
+						type: "GoogleProvider@cbsso",
 						clientId            : getJavaSystem().getProperty( "GOOGLE_CLIENT_ID" ),
 						clientSecret        : getJavaSystem().getProperty( "GOOGLE_CLIENT_SECRET" )
 					},
 					{
-						type: "GitHubProvider@oauth",
+						type: "GitHubProvider@cbsso",
 						clientId            : getJavaSystem().getProperty( "GITHUB_CLIENT_ID" ),
 						clientSecret        : getJavaSystem().getProperty( "GITHUB_CLIENT_SECRET" )
 					},
 					{
-						type: "FacebookProvider@oauth",
+						type: "FacebookProvider@cbsso",
 						clientId            : getJavaSystem().getProperty( "FACEBOOK_CLIENT_ID" ),
 						clientSecret        : getJavaSystem().getProperty( "FACEBOOK_CLIENT_SECRET" )
 					},
 					{
 						name: "entra",
-						type: "MicrosoftSAMLProvider@oauth",
+						type: "MicrosoftSAMLProvider@cbsso",
 						clientId            : getJavaSystem().getProperty( "MS_ENTRA_CLIENT_ID" ),
 						clientSecret        : getJavaSystem().getProperty( "MS_ENTRA_CLIENT_SECRET" ),
 						authEndpoint        : getJavaSystem().getProperty( "MS_ENTRA_SIGN_ON_ENDPOINT" )

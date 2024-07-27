@@ -17,7 +17,7 @@ on:
           type: boolean
 
 env:
-  MODULE_ID: oAuth2
+  MODULE_ID: cbsso
   SNAPSHOT: ${{ inputs.snapshot || false }}
 
 jobs:

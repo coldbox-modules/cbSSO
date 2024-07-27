@@ -1,6 +1,6 @@
 component
 	accessors="true"
-	implements  = "oAuth.models.ISSOIntegrationProvider"
+	implements  = "cbsso.models.ISSOIntegrationProvider"
 {
 
 	property name = "Name";
@@ -12,7 +12,7 @@ component
     property name = "redirectUri";
     property name = "Scope";
 
-    property name="oAuthService" inject="oAuthService@oauth";
+    property name="oAuthService" inject="oAuthService@cbsso";
     property name="wirebox" inject="wirebox";
     property name="hyper" inject="HyperBuilder@hyper";
 
@@ -53,7 +53,7 @@ component
     }
 
     public any function processAuthorizationEvent( required any event ){
-        var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@oauth" );
+        var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@cbsso" );
         var rawData = {
             "authResponse": {},
             "accessResponse": {},

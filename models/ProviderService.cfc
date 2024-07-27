@@ -1,7 +1,7 @@
 component accessors="true" singleton threadsafe {
 
-	property name="moduleSettings" inject="coldbox:moduleSettings:oAuth";
-	property name="moduleConfig"   inject="coldbox:moduleConfig:oAuth";
+	property name="moduleSettings" inject="coldbox:moduleSettings:cbsso";
+	property name="moduleConfig"   inject="coldbox:moduleConfig:cbsso";
 	property name="wirebox"        inject="wirebox";
 	property name="log"            inject="logbox:logger:{this}";
 
@@ -35,7 +35,7 @@ component accessors="true" singleton threadsafe {
 				return {
 					"name": provider.getName(),
 					"iconURL": provider.getIconURL(),
-					"url": "/oauth/auth/#provider.getName()#/start"
+					"url": "/cbsso/auth/#provider.getName()#/start"
 				};
 			});
 	}
@@ -96,7 +96,7 @@ component accessors="true" singleton threadsafe {
 				} )
 				// Build out wirebox mapping
 				.reduce( function( result, item ){
-					arguments.result[ arguments.item.replaceNoCase( "Provider", "" ) ] = "#arguments.item#@oAuth";
+					arguments.result[ arguments.item.replaceNoCase( "Provider", "" ) ] = "#arguments.item#@cbsso";
 					return arguments.result;
 				}, {} );
 		}
