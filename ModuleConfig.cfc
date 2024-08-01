@@ -14,17 +14,25 @@ component {
 
 	// Model Namespace
 	this.modelNamespace = "cbsso";
-	this.autoMapModels = true;
+	this.autoMapModels  = true;
 	// CF Mapping
-	this.cfmapping = "cbsso";
-	this.entryPoint = "/cbsso";
+	this.cfmapping      = "cbsso";
+	this.entryPoint     = "/cbsso";
 
 	// Dependencies
 	this.dependencies = [ "hyper", "jwtcfml" ];
 
 	routes = [
-		{ pattern: "/auth/:providerName/start", handler: "Auth", action: "start" },
-		{ pattern: "/auth/:providerName", handler: "Auth", action: "authorize" }
+		{
+			pattern : "/auth/:providerName/start",
+			handler : "Auth",
+			action  : "start"
+		},
+		{
+			pattern : "/auth/:providerName",
+			handler : "Auth",
+			action  : "authorize"
+		}
 	];
 
 	/**
@@ -32,11 +40,11 @@ component {
 	 */
 	function configure(){
 		settings = {
-			enableCBAuthIntegration: false,
-			errorRedirect: "",
-			successRedirect: "",
-			providers : [
-				// Your google login API credentials
+			enableCBAuthIntegration : false,
+			errorRedirect           : "",
+			successRedirect         : "",
+			providers               : [
+				 // Your google login API credentials
 				// "google": {
 				// 	clientId            : getSystemSetting( key = "GOOGLE_CLIENT_ID", defaultValue = "" ),
 				// 	clientSecret        : getSystemSetting( key = "GOOGLE_CLIENT_SECRET", defaultValue = "" ),
@@ -47,12 +55,7 @@ component {
 			]
 		};
 
-		interceptorSettings = {
-            customInterceptionPoints = [
-                "CBSSOMissingProvider",
-                "CBSSOAuthorization"
-            ]
-        };
+		interceptorSettings = { customInterceptionPoints : [ "CBSSOMissingProvider", "CBSSOAuthorization" ] };
 	};
 
 

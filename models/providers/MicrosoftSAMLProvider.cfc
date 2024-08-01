@@ -1,126 +1,136 @@
-component
-	accessors="true"
-	implements  = "cbsso.models.ISSOIntegrationProvider"
-{
-	property name = "Name";
-    property name = "clientId";
-    property name = "clientSecret";
-    property name = "authEndpoint";
-    property name = "redirectUri";
+component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 
-    property name="wirebox" inject="wirebox";
+	property name="Name";
+	property name="clientId";
+	property name="clientSecret";
+	property name="authEndpoint";
+	property name="redirectUri";
 
-    variables.name = "Microsoft Entra";
+	property name="wirebox" inject="wirebox";
 
-    public string function getName() {
-        return variables.name;
-    }
+	variables.name = "Microsoft Entra";
 
-    public string function getRedirectUri(){
-        if( !isNull( variables.redirectUri ) ){
-            return variables.redirectUri;
-        }
+	public string function getName(){
+		return variables.name;
+	}
 
-        var protocol = cgi.HTTPS == "" ? "http://" : "https://";
+	public string function getRedirectUri(){
+		if ( !isNull( variables.redirectUri ) ) {
+			return variables.redirectUri;
+		}
 
-        return "#protocol##cgi.HTTP_HOST#/cbsso/auth/#variables.name.lcase()#";
-    }
-    
-    public any function populateFromSettings( required struct settings ){
-        variables.Name = settings.Name;
-        variables.clientId = settings.clientId;
-        variables.clientSecret = settings.clientSecret;
-        variables.authEndpoint = settings.authEndpoint;
-        variables.redirectUri = settings.redirectUri;
+		var protocol = cgi.HTTPS == "" ? "http://" : "https://";
 
-        return this;
-    }
+		return "#protocol##cgi.HTTP_HOST#/cbsso/auth/#variables.name.lcase()#";
+	}
 
-    public string function startAuthenticationWorflow( required any event ){
-        var encoded = encodeForURL( deflateAndBase64Enocde( getRawSAMLRequest() ) );
+	public any function populateFromSettings( required struct settings ){
+		variables.Name         = settings.Name;
+		variables.clientId     = settings.clientId;
+		variables.clientSecret = settings.clientSecret;
+		variables.authEndpoint = settings.authEndpoint;
+		variables.redirectUri  = settings.redirectUri;
 
-        return "#variables.authEndpoint#?SAMLRequest=#encoded#";
-    }
+		return this;
+	}
 
-    public any function processAuthorizationEvent( required any event ){
-        var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@cbsso" );
+	public string function startAuthenticationWorflow( required any event ){
+		var encoded = encodeForURL( deflateAndBase64Enocde( getRawSAMLRequest() ) );
 
-        try {
-            var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
-            var data = charsetEncode( decoded, "utf-8" );
-            var xmlData = xmlParse( data.reREplace( 'xmlns=".+?"', '', "all" ) );
-            
-            authResponse.setRawResponseData( data );
+		return "#variables.authEndpoint#?SAMLRequest=#encoded#";
+	}
 
-            if( !detectSuccess( xmlData ) ){
-                return authResponse
-                    .setWasSuccessful( false )
-                    .setRawResponseData( data )
-                    .setErrorMessage( extractErrorMessage( xmlData ) );
-            }
+	public any function processAuthorizationEvent( required any event ){
+		var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@cbsso" );
 
-            return authResponse
-                .setWasSuccessful( true )
-                .setFirstName( extractFirstName( xmlData ) )
-                .setLastName( extractLastName( xmlData ) )
-                .setEmail( extractEmail( xmlData ) )
-                .setUserId( extractUserId( xmlData ) )
-                .setRawResponseData( data );
-        }
-        catch( any e ){
-            return authResponse
-                .setWasSuccessful( false )
-                .setErrorMessage( e.message );
-        }
-    }
+		try {
+			var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
+			var data    = charsetEncode( decoded, "utf-8" );
+			var xmlData = xmlParse( data.reREplace( "xmlns="".+?""", "", "all" ) );
 
-    private string function getRawSAMLRequest(){
-        var id = "id" & createUUID();
-        return '<samlp:AuthnRequest
-        xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
-        ID="#id#"
-        Version="2.0" IssueInstant="#now().datetimeFormat( "yyyy-mm-dd'T'HH:nn:ss.lZ" )#"
-        xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">
-        <Issuer xmlns="urn:oasis:names:tc:SAML:2.0:assertion">#variables.clientId#</Issuer>
-      </samlp:AuthnRequest>';
-    }
+			authResponse.setRawResponseData( data );
 
-    private string function deflateAndBase64Enocde( required string inputString ){
-        var output = createObject( "java", "java.nio.ByteBuffer" ).allocate( 1024 ).array();
-        var Deflater = createObject( "java", "java.util.zip.Deflater" );
-        var compresser = Deflater.init( Deflater[ "DEFAULT_COMPRESSION"], true);
-        compresser.setStrategy( compresser[ "DEFAULT_STRATEGY" ] );
-        compresser.setInput(javaCast( "string", inputString).getBytes( "UTF-8" ));
-        compresser.finish();
-        var compressedDataLength = compresser.deflate(output);
-        compresser.end();
+			if ( !detectSuccess( xmlData ) ) {
+				return authResponse
+					.setWasSuccessful( false )
+					.setRawResponseData( data )
+					.setErrorMessage( extractErrorMessage( xmlData ) );
+			}
 
-        output = javaCast( "byte[]", ArraySlice( output, 1, compressedDataLength ) );
-        return binaryEncode( output, "base64" );
-    }
+			return authResponse
+				.setWasSuccessful( true )
+				.setFirstName( extractFirstName( xmlData ) )
+				.setLastName( extractLastName( xmlData ) )
+				.setEmail( extractEmail( xmlData ) )
+				.setUserId( extractUserId( xmlData ) )
+				.setRawResponseData( data );
+		} catch ( any e ) {
+			return authResponse.setWasSuccessful( false ).setErrorMessage( e.message );
+		}
+	}
 
-    private boolean function detectSuccess( required xmlDoc ){
-        return xmlSearch( xmlDoc, "samlp:Response//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']" ).len() == 1;
-    }
+	private string function getRawSAMLRequest(){
+		var id = "id" & createUUID();
+		return "<samlp:AuthnRequest
+        xmlns=""urn:oasis:names:tc:SAML:2.0:metadata""
+        ID=""#id#""
+        Version=""2.0"" IssueInstant=""#now().datetimeFormat( "yyyy-mm-dd'T'HH:nn:ss.lZ" )#""
+        xmlns:samlp=""urn:oasis:names:tc:SAML:2.0:protocol"">
+        <Issuer xmlns=""urn:oasis:names:tc:SAML:2.0:assertion"">#variables.clientId#</Issuer>
+      </samlp:AuthnRequest>";
+	}
 
-    private boolean function extractErrorMessage( required xmlDoc ){
-        return xmlSearch( xmlDoc, "samlp:Response//samlp:StatusMessage" )[1].xmlchildren[1].xmltext;
-    }
+	private string function deflateAndBase64Enocde( required string inputString ){
+		var output     = createObject( "java", "java.nio.ByteBuffer" ).allocate( 1024 ).array();
+		var Deflater   = createObject( "java", "java.util.zip.Deflater" );
+		var compresser = Deflater.init( Deflater[ "DEFAULT_COMPRESSION" ], true );
+		compresser.setStrategy( compresser[ "DEFAULT_STRATEGY" ] );
+		compresser.setInput( javacast( "string", inputString ).getBytes( "UTF-8" ) );
+		compresser.finish();
+		var compressedDataLength = compresser.deflate( output );
+		compresser.end();
 
-    private string function extractFirstName( required xmlDoc ){
-        return xmlSearch( xmlDoc, "samlp:Response//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']" )[1].xmlchildren[1].xmltext;
-    }
+		output = javacast( "byte[]", arraySlice( output, 1, compressedDataLength ) );
+		return binaryEncode( output, "base64" );
+	}
 
-    private string function extractLastName( required xmlDoc ){
-        return xmlSearch( xmlDoc, "samlp:Response//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname']" )[1].xmlchildren[1].xmltext;
-    }
+	private boolean function detectSuccess( required xmlDoc ){
+		return xmlSearch(
+			xmlDoc,
+			"samlp:Response//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']"
+		).len() == 1;
+	}
 
-    private string function extractEmail( required xmlDoc ){
-        return xmlSearch( xmlDoc, "samlp:Response//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']" )[1].xmlchildren[1].xmltext;
-    }
+	private boolean function extractErrorMessage( required xmlDoc ){
+		return xmlSearch( xmlDoc, "samlp:Response//samlp:StatusMessage" )[ 1 ].xmlchildren[ 1 ].xmltext;
+	}
 
-    private string function extractUserId( required xmlDoc ){
-        return xmlSearch( xmlDoc, "samlp:Response//Attribute[@Name='http://schemas.microsoft.com/identity/claims/objectidentifier']" )[1].xmlchildren[1].xmltext;
-    }
+	private string function extractFirstName( required xmlDoc ){
+		return xmlSearch(
+			xmlDoc,
+			"samlp:Response//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']"
+		)[ 1 ].xmlchildren[ 1 ].xmltext;
+	}
+
+	private string function extractLastName( required xmlDoc ){
+		return xmlSearch(
+			xmlDoc,
+			"samlp:Response//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname']"
+		)[ 1 ].xmlchildren[ 1 ].xmltext;
+	}
+
+	private string function extractEmail( required xmlDoc ){
+		return xmlSearch(
+			xmlDoc,
+			"samlp:Response//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']"
+		)[ 1 ].xmlchildren[ 1 ].xmltext;
+	}
+
+	private string function extractUserId( required xmlDoc ){
+		return xmlSearch(
+			xmlDoc,
+			"samlp:Response//Attribute[@Name='http://schemas.microsoft.com/identity/claims/objectidentifier']"
+		)[ 1 ].xmlchildren[ 1 ].xmltext;
+	}
 
 }

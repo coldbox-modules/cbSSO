@@ -14,12 +14,16 @@ component accessors="true" singleton threadsafe {
 		variables.moduleSettings.providers.each( function( providerDefinition ){
 			var provider = wirebox.getInstance( providerDefinition.type );
 
-			for( var setting in providerDefinition ){
-				if( !structKeyExists( provider, "set#setting#" ) ){
+			for ( var setting in providerDefinition ) {
+				if ( !structKeyExists( provider, "set#setting#" ) ) {
 					continue;
 				}
 
-				invoke( provider, "set#setting#", [ providerDefinition[ setting ] ] );
+				invoke(
+					provider,
+					"set#setting#",
+					[ providerDefinition[ setting ] ]
+				);
 			}
 
 			providers[ provider.getName() ] = provider;
@@ -30,25 +34,26 @@ component accessors="true" singleton threadsafe {
 	public array function getRenderableProviderData(){
 		return variables.providers
 			.keyArray()
-			.map( (name) => {
+			.map( ( name ) => {
 				var provider = variables.providers[ name ];
 				return {
-					"name": provider.getName(),
-					"url": "/cbsso/auth/#provider.getName()#/start"
+					"name" : provider.getName(),
+					"url"  : "/cbsso/auth/#provider.getName()#/start"
 				};
-			});
+			} );
 	}
 
 	public any function getAllProviders(){
-		return variables.providers.valueArray()
+		return variables.providers
+			.valueArray()
 			.map( ( providerRecord ) => {
-				if( isNull( providerRecord.provider) ){
+				if ( isNull( providerRecord.provider ) ) {
 					providerRecord.provider  = buildProvider( provider: providerRecord.name );
 					providerRecord.createdOn = now();
 				}
 
 				return providerRecord.provider;
-			});
+			} );
 	}
 
 	function get( required name ){
