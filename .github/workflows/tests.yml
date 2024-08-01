@@ -67,16 +67,16 @@ jobs:
           echo "Github Ref is $GITHUB_REF"
 
           # Setup .env
-          touch ./test-harness/.env
-          printf "GOOGLE_CLIENT_ID=new_google_id" >> ./test-harness/.env
-          printf "GOOGLE_CLIENT_SECRET=google_secret" >> ./test-harness/.env
-          printf "GITHUB_CLIENT_ID=test-value" >> ./test-harness/.env
-          printf "GITHUB_CLIENT_SECRET=test-value" >> ./test-harness/.env
-          printf "FACEBOOK_CLIENT_ID=test-value" >> ./test-harness/.env
-          printf "FACEBOOK_CLIENT_SECRET=test-value" >> ./test-harness/.env
-          printf "MS_ENTRA_CLIENT_ID=test-value" >> ./test-harness/.env
-          printf "MS_ENTRA_CLIENT_SECRET=test-value" >> ./test-harness/.env
-          printf "MS_ENTRA_SIGN_ON_ENDPOINT=test-value" >> ./test-harness/.env
+          touch .env
+          printf "GOOGLE_CLIENT_ID=new_google_id" >> .env
+          printf "GOOGLE_CLIENT_SECRET=google_secret" >> .env
+          printf "GITHUB_CLIENT_ID=test-value" >> .env
+          printf "GITHUB_CLIENT_SECRET=test-value" >> .env
+          printf "FACEBOOK_CLIENT_ID=test-value" >> .env
+          printf "FACEBOOK_CLIENT_SECRET=test-value" >> .env
+          printf "MS_ENTRA_CLIENT_ID=test-value" >> .env
+          printf "MS_ENTRA_CLIENT_SECRET=test-value" >> .env
+          printf "MS_ENTRA_SIGN_ON_ENDPOINT=test-value" >> .env
 
       - name: Install Test Harness with ColdBox ${{ matrix.coldboxVersion }}
         run: |
