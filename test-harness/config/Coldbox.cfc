@@ -32,6 +32,35 @@
 			"cbsso" : {
 				"providers" : [
 					{
+						type: "GitHubProvider@cbsso",
+						clientId            : getJavaSystem().getProperty( "GITHUB_CLIENT_ID" ),
+						clientSecret        : getJavaSystem().getProperty( "GITHUB_CLIENT_SECRET" )
+					}
+				]
+			}
+		};
+
+		moduleSettings = {
+			cbauth = {
+				// This is the path to your user object that contains the credential 
+				// validation methods
+				userServiceClass = "models.UserService"
+			},
+			"cbsecurity": {
+				authentication : {
+					// The WireBox ID of the authentication service to use which must adhere to the cbsecurity.interfaces.IAuthService interface.
+					"provider"        : "authenticationService@cbauth",
+					// WireBox ID of the user service to use when leveraging user authentication, we default this to whatever is set
+					// by cbauth or basic authentication. (Optional)
+					"userService"     : "cbauth.userServiceclass",
+					// The name of the variable to use to store an authenticated user in prc scope on all incoming authenticated requests
+					"prcUserVariable" : "oCurrentUser"
+				}
+			},
+			"cbsso" : {
+				"enableCBAuthIntegration": true,
+				"providers" : [
+					{
 						type: "CustomProvider"
 					},
 					{

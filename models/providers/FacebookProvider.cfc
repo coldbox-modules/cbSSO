@@ -26,10 +26,6 @@ component
         return variables.name;
     }
 
-    public string function getIconURL(){
-        return "";
-    }
-
     public string function getRedirectUri(){
         if( !isNull( variables.redirectUri ) ){
             return variables.redirectUri;

@@ -32,6 +32,7 @@ component {
 	 */
 	function configure(){
 		settings = {
+			enableCBAuthIntegration: false,
 			errorRedirect: "",
 			successRedirect: "",
 			providers : [
@@ -45,6 +46,13 @@ component {
 				// }
 			]
 		};
+
+		interceptorSettings = {
+            customInterceptionPoints = [
+                "CBSSOMissingProvider",
+                "CBSSOAuthorization"
+            ]
+        };
 	};
 
 
@@ -54,6 +62,16 @@ component {
 	function onLoad(){
 		// Register all app disks
 		wirebox.getInstance( "ProviderService@cbsso" ).registerProviders();
+
+		if ( settings.enableCBAuthIntegration ) {
+			controller
+				.getInterceptorService()
+				.registerInterceptor(
+					interceptorClass      = "cbsso.interceptors.cbAuth",
+					interceptorProperties = settings,
+					interceptorName       = "cbsso@global"
+				);
+		}
 	}
 
 	/**

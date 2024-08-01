@@ -34,7 +34,6 @@ component accessors="true" singleton threadsafe {
 				var provider = variables.providers[ name ];
 				return {
 					"name": provider.getName(),
-					"iconURL": provider.getIconURL(),
 					"url": "/cbsso/auth/#provider.getName()#/start"
 				};
 			});

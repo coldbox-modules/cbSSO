@@ -6,7 +6,9 @@ component {
         var provider = ProviderService.get( event.getValue( "providerName", "" ) );
 
         if( isNull( provider ) ){
-            // TODO add interception point to handle missing provider
+            announce( "CBSSOMissingProvider", {
+                "providerName": event.getValue( "providerName", "" )
+            } );
             relocate( moduleSettings.errorRedirect );
         }
 
@@ -17,18 +19,20 @@ component {
         var provider = ProviderService.get( event.getValue( "providerName", "" ) );
 
         if( isNull( provider ) ){
-            // TODO add interception point to handle missing provider
+            announce( "CBSSOMissingProvider", {
+                "providerName": event.getValue( "providerName", "" )
+            } );
+
             relocate( moduleSettings.errorRedirect );
         }
 
         var ssoAuthorizationEvent = provider.processAuthorizationEvent( event );
 
-        announce( "CBSSOOnAuthorization", {
+        announce( "CBSSOAuthorization", {
             "provider": provider,
             "ssoAuthorizationEvent": ssoAuthorizationEvent
         } );
-
-        // TODO this should probably be a module setting
+        
         relocate( moduleSettings.successRedirect );
     }
 

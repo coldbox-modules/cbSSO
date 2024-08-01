@@ -16,10 +16,6 @@ component
         return variables.name;
     }
 
-    public string function getIconURL(){
-        return "";
-    }
-
     public string function getRedirectUri(){
         if( !isNull( variables.redirectUri ) ){
             return variables.redirectUri;
@@ -52,9 +48,8 @@ component
         try {
             var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
             var data = charsetEncode( decoded, "utf-8" );
-            writeDUmp( data );
-            abort;
             var xmlData = xmlParse( data.reREplace( 'xmlns=".+?"', '', "all" ) );
+            
             authResponse.setRawResponseData( data );
 
             if( !detectSuccess( xmlData ) ){

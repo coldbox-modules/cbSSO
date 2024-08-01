@@ -26,10 +26,6 @@ component
         return variables.name;
     }
 
-    public string function getIconURL(){
-        return "";
-    }
-
     public string function getRedirectUri(){
         if( !isNull( variables.redirectUri ) ){
             return variables.redirectUri;
@@ -37,7 +33,7 @@ component
 
         var protocol = cgi.HTTPS == "" ? "http://" : "https://";
 
-        return "#protocol##cgi.HTTP_HOST#/oauth/auth/#variables.name.lcase()#";
+        return "#protocol##cgi.HTTP_HOST#/cbsso/auth/#variables.name.lcase()#";
     }
 
     public string function startAuthenticationWorflow( required any event ){
@@ -94,7 +90,7 @@ component
                 .setWasSuccessful( true )
                 .setName( userData.name )
                 .setEmail( userData.email )
-                .setUserId( userData.id )
+                .setUserId( userData.id );
         }
         catch( any e ){
             return authResponse
