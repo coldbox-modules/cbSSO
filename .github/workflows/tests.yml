@@ -93,6 +93,7 @@ jobs:
       - name: Run Tests
         run: |
           mkdir -p test-harness/tests/results
+          box cbplaywright driver install 1.33.0 --force
           box testbox run --verbose outputFile=test-harness/tests/results/test-results outputFormats=json,antjunit
 
       - name: Publish Test Results
