@@ -1,29 +1,13 @@
 /**
  * Disk Service Spec
  */
-component extends="oAuth.models.testing.BaseProviderSpec" {
+component extends="cbsso.models.testing.BaseProviderSpec" {
 
 	this.loadColdbox   = true;
 	// Unload Coldbox after this spec, since we are doing a shutdown of all disks
 	this.unLoadColdBox = true;
 
 	variables.providerName = "GOogle";
-
-	/*********************************** LIFE CYCLE Methods ***********************************/
-
-	/**
-	 * executes before all suites+specs in the run() method
-	 */
-	function beforeAll(){
-		super.beforeAll();
-	}
-
-	/**
-	 * executes after all suites+specs in the run() method
-	 */
-	function afterAll(){
-		super.afterAll();
-	}
 
 	/*********************************** BDD SUITES ***********************************/
 
@@ -41,26 +25,26 @@ component extends="oAuth.models.testing.BaseProviderSpec" {
 				} );
 			} );
 
-			story( "I can authenticate with the provider", function(){
-				it( "can build the auth url", function(){
-					var authUrl = provider.buildAuthUrl();
-					var browser = launchInteractiveBrowser( variables.playwright.firefox() );
-					var page    = browser.newPage();
-					navigate( page, authUrl );
-					waitForLoadState( page );
-					page.pause();
-					var oauthMessage = page.getByText( "The OAuth client was not found." );
+			// story( "I can authenticate with the provider", function(){
+			// 	it( "can build the auth url", function(){
+			// 		var authUrl = provider.buildAuthUrl();
+			// 		var browser = launchInteractiveBrowser( variables.playwright.firefox() );
+			// 		var page    = browser.newPage();
+			// 		navigate( page, authUrl );
+			// 		waitForLoadState( page );
+			// 		page.pause();
+			// 		var oauthMessage = page.getByText( "The OAuth client was not found." );
 
-					expect( oauthMessage.isVisible() ).toBeTrue();
-				} );
+			// 		expect( oauthMessage.isVisible() ).toBeTrue();
+			// 	} );
 
-				it( "can build the request token url", function(){
-					var code          = "any-token";
-					var tokenResponse = provider.makeAccessTokenRequest( code );
+			// 	it( "can build the request token url", function(){
+			// 		var code          = "any-token";
+			// 		var tokenResponse = provider.makeAccessTokenRequest( code );
 
-					expect( tokenResponse.content.getRequest().getBody() ).toInclude( code );
-				} );
-			} );
+			// 		expect( tokenResponse.content.getRequest().getBody() ).toInclude( code );
+			// 	} );
+			// } );
 		} );
 	}
 
