@@ -67,7 +67,13 @@ jobs:
           echo "Github Ref is $GITHUB_REF"
           echo "GOOGLE_CLIENT_ID=new_google_id" >> $GITHUB_ENV
           echo "GOOGLE_CLIENT_SECRET=google_secret" >> $GITHUB_ENV
-          echo "GOOGLE_REDIRECT_URI=redirect_uri_val" >> $GITHUB_ENV
+          echo "GITHUB_CLIENT_ID=test-value" >> $GITHUB_ENV
+          echo "GITHUB_CLIENT_SECRET=test-value" >> $GITHUB_ENV
+          echo "FACEBOOK_CLIENT_ID=test-value" >> $GITHUB_ENV
+          echo "FACEBOOK_CLIENT_SECRET=test-value" >> $GITHUB_ENV
+          echo "MS_ENTRA_CLIENT_ID=test-value" >> $GITHUB_ENV
+          echo "MS_ENTRA_CLIENT_SECRET=test-value" >> $GITHUB_ENV
+          echo "MS_ENTRA_SIGN_ON_ENDPOINT=test-value" >> $GITHUB_ENV
 
       - name: Install Test Harness with ColdBox ${{ matrix.coldboxVersion }}
         run: |
