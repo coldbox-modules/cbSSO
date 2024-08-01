@@ -84,6 +84,7 @@ jobs:
 
       - name: Start ${{ matrix.cfengine }} Server
         run: |
+          echo $FACEBOOK_CLIENT_ID
           box server start serverConfigFile="server-${{ matrix.cfengine }}.json" --noSaveSettings --debug
           curl http://127.0.0.1:60299
 
