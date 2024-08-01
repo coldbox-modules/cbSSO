@@ -1,4 +1,4 @@
-         component accessors="true" {
+          component accessors="true" {
 
 	property name="hyper" inject="HyperBuilder@hyper";
 	property name="jwt"   inject="jwt@jwtcfml";
