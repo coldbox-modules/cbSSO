@@ -16,7 +16,7 @@ component {
 	this.modelNamespace = "cbsso";
 	this.autoMapModels  = true;
 	// CF Mapping
-	this.cfmapping      = "cbsso";
+	this.cfmapping      = "cbSSO";
 	this.entryPoint     = "/cbsso";
 
 	// Dependencies
