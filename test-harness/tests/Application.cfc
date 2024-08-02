@@ -48,6 +48,7 @@ component {
 	};
 
 	this.mappings[ "/cbPlaywright" ] = rootPath & "/modules/cbPlaywright";
+	this.mappings[ "/hyper" ] = rootPath & "/modules/hyper";
 
 	// ORM Definitions
 	/**
@@ -67,6 +68,9 @@ component {
 	**/
 
 	function onRequestStart( required targetPage ){
+		// this is necessary to clear out to have the VirutalApp initialize properly
+		structDelete( application, "cbController" );
+		structDelete( application, "wirebox" );
 		// Set a high timeout for long running tests
 		setting requestTimeout   ="9999";
 		// New ColdBox Virtual Application Starter

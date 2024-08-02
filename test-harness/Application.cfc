@@ -41,11 +41,20 @@ component{
 
 	// Map back to its root
 	moduleRootPath 	= REReplaceNoCase( this.mappings[ "/root" ], "#request.MODULE_NAME#(\\|/)test-harness(\\|/)", "" );
-	modulePath 		= REReplaceNoCase( this.mappings[ "/root" ], "test-harness(\\|/)", "" );
+	modulePath 		= REReplaceNoCase( this.mappings[ "/root" ], "(\\|/)test-harness(\\|/)", "" );
 
 	// Module Root + Path Mappings
 	this.mappings[ "/moduleroot" ] = moduleRootPath;
 	this.mappings[ "/#request.MODULE_NAME#" ] = modulePath;
+
+	this.mappings[ "/cbPlaywright" ] = moduleRootPath & "/modules/cbPlaywright";
+	this.mappings[ "/hyper" ] = moduleRootPath & "/modules/hyper";
+
+	// writeDUmp( moduleRootPath );
+	// writeDUmp( modulePath );
+	// writeDump( this.mappings );
+	// abort;
+
 
 	// ORM definitions: ENABLE IF NEEDED
 	//this.datasource = "coolblog";
@@ -73,7 +82,6 @@ component{
 
 	// request start
 	public boolean function onRequestStart(String targetPage){
-
 		if( url.keyExists( "fwreinit" ) ){
 			if( server.keyExists( "lucee" ) ){
 				pagePoolClear();

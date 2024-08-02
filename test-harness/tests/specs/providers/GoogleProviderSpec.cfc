@@ -5,9 +5,14 @@ component extends="cbsso.models.testing.BaseProviderSpec" {
 
 	this.loadColdbox   = true;
 	// Unload Coldbox after this spec, since we are doing a shutdown of all disks
-	this.unLoadColdBox = true;
+	this.unLoadColdBox = false;
 
 	variables.providerName = "GOogle";
+
+	function beforeAll(){
+		super.beforeAll();
+		setup();
+	}
 
 	/*********************************** BDD SUITES ***********************************/
 
@@ -15,12 +20,13 @@ component extends="cbsso.models.testing.BaseProviderSpec" {
 		// all your suites go here.
 		describe( "Google Specs", function(){
 			beforeEach( function( currentSpec ){
+				setup();
 				provider  = getProvider();
 				var hyper = getInstance( "HyperRequest@hyper" );
 			} );
 
-			story( "The disk should be created and started by the service", function(){
-				it( "is started by the service", function(){
+			story( "The service", function(){
+				it( "should exist", function(){
 					expect( provider ).toBeComponent();
 				} );
 			} );

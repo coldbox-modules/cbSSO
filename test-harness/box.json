@@ -5,7 +5,7 @@
     "private":true,
     "description":"",
     "dependencies":{
-        "coldbox":"^6.0.0",
+        "coldbox":"^7.0.0",
         "cbsecurity":"^3.4.3+5"
     },
     "devDependencies":{
@@ -17,7 +17,8 @@
         "coldbox":"coldbox/",
         "testbox":"testbox/",
         "cbPlaywright":"modules/cbPlaywright/",
-        "cbsecurity":"modules/cbsecurity/"
+        "cbsecurity":"modules/cbsecurity/",
+        "cbjavaloader":"modules/cbjavaloader/"
     },
     "testbox":{
         "runner":"http://localhost:60299/tests/runner.cfm"
