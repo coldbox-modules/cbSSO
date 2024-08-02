@@ -48,7 +48,7 @@ component {
 	};
 
 	this.mappings[ "/cbPlaywright" ] = rootPath & "/modules/cbPlaywright";
-	this.mappings[ "/hyper" ] = rootPath & "/modules/hyper";
+	this.mappings[ "/hyper" ]        = rootPath & "/modules/hyper";
 
 	// ORM Definitions
 	/**
