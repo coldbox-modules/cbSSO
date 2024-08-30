@@ -1,34 +1,34 @@
 component {
 
     /**
-     * This function is used to tell cbSSO which user is associated with an ssoAuthorizationResponse. 
-     * 
-     * @param ssoAuthorizationResponse An instance of ISSOAuthorizationResponse that was successful
-     * @param provider The configured provider used for this SSO event
-     *
-     * @return An cbAuth.models.IUser instance or null
-     */
-    public any function findBySSO( required any ssoAuthorizationResponse, required any provider );
+    //  * This function is used to tell cbSSO which user is associated with an ssoAuthorizationResponse. 
+    //  * 
+    //  * @param ssoAuthorizationResponse An instance of ISSOAuthorizationResponse that was successful
+    //  * @param provider The configured provider used for this SSO event
+    //  *
+    //  * @return An cbAuth.models.IUser instance or null
+    //  */
+    // public any function findBySSO( required any ssoAuthorizationResponse, required any provider );
 
-    /**
-     * Create a new user based off of information from the ISSOAuthorizationResponse.
-     * 
-     * @param ssoAuthorizationResponse An instance of ISSOAuthorizationResponse that was successful
-     * @param provider The configured provider used for this SSO event
-     *
-     * @return An cbAuth.models.IUser instance
-     */
-    public any function createFromSSO( required any ssoAuthorizationResponse, required any provider );
+    // /**
+    //  * Create a new user based off of information from the ISSOAuthorizationResponse.
+    //  * 
+    //  * @param ssoAuthorizationResponse An instance of ISSOAuthorizationResponse that was successful
+    //  * @param provider The configured provider used for this SSO event
+    //  *
+    //  * @return An cbAuth.models.IUser instance
+    //  */
+    // public any function createFromSSO( required any ssoAuthorizationResponse, required any provider );
 
-    /**
-     * Create a new user based off of information from the ISSOAuthorizationResponse.
-     * 
-     * @param ssoAuthorizationResponse An instance of ISSOAuthorizationResponse that was successful
-     * @param provider The configured provider used for this SSO event
-     *
-     * @return An cbAuth.models.IUser instance
-     */
-    public void function updateFromSSO( required any user, required any ssoAuthorizationResponse, required any provider );
+    // /**
+    //  * Create a new user based off of information from the ISSOAuthorizationResponse.
+    //  * 
+    //  * @param ssoAuthorizationResponse An instance of ISSOAuthorizationResponse that was successful
+    //  * @param provider The configured provider used for this SSO event
+    //  *
+    //  * @return An cbAuth.models.IUser instance
+    //  */
+    // public void function updateFromSSO( required any user, required any ssoAuthorizationResponse, required any provider );
 
     public any function findBySSO( required any ssoAuthorizationResponse, required any provider ){
         return;
@@ -36,6 +36,9 @@ component {
 
     public any function createFromSSO( required any ssoEvent, required any provider ){
         var a = new User();
+
+        writeDump( ssoEvent );
+        abort;
 
         a.setEmail( ssoEvent.getEmail() )
             .setId( ssoEvent.getUserId() );

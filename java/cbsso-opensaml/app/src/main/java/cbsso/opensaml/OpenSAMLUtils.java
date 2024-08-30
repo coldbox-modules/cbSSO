@@ -1,15 +1,27 @@
 package cbsso.opensaml;
 
+import java.io.ByteArrayInputStream;
+import java.security.cert.X509Certificate;
+
 import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.Marshaller;
 import org.opensaml.core.xml.io.MarshallingException;
+import org.opensaml.core.xml.io.Unmarshaller;
+import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.saml.common.SignableSAMLObject;
+import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.security.x509.BasicX509Credential;
+import org.opensaml.xmlsec.signature.support.SignatureException;
+import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import net.shibboleth.utilities.java.support.security.impl.RandomIdentifierGenerationStrategy;
@@ -83,5 +95,24 @@ public class OpenSAMLUtils {
         }
 
         return SerializeSupport.prettyPrintXML(element);
+    }
+
+    public static Response parseResponse(String samlResponse) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document document = builder.parse(new ByteArrayInputStream(samlResponse.getBytes()));
+
+        Element element = document.getDocumentElement();
+        UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
+        Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
+
+        XMLObject xmlObject = unmarshaller.unmarshall(element);
+        return (Response) xmlObject;
+    }
+
+    public static void verifySignature(Response response, X509Certificate certificate) throws SignatureException {
+        BasicX509Credential credential = new BasicX509Credential(certificate);
+        SignatureValidator.validate(response.getAssertions().get(0).getSignature(), credential);
     }
 }

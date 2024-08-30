@@ -8,7 +8,12 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
+
+sourceCompatibility = 11
+targetCompatibility = 11
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -46,6 +51,25 @@ java {
 application {
     // Define the main class for the application.
     mainClass = 'cbsso.opensaml.App'
+}
+
+jar {
+    archiveBaseName = "cbsso-opensaml"
+}
+
+shadowJar {
+	archiveBaseName = "cbsso-opensaml"
+    mergeServiceFiles()
+	minimize{
+        exclude( dependency( "org.opensaml:opensaml-core:.*" ) )
+        exclude( dependency( "org.slf4j:.*:.*" ) )
+        exclude( dependency( "org.opensaml:opensaml-saml-impl:.*" ) )
+        exclude( dependency( "org.opensaml:opensaml-soap-api:.*" ) )
+        exclude( dependency( "org.opensaml:opensaml-xmlsec-api:.*" ) )
+        exclude( dependency( "org.opensaml:opensaml-security-api:.*" ) )
+        exclude( dependency( "org.opensaml:opensaml-security-impl:.*" ) )
+        exclude( dependency( "org.opensaml:opensaml-profile-api:.*" ) )
+	}
 }
 
 tasks.named('test') {

@@ -84,7 +84,9 @@
 						type: "MicrosoftSAMLProvider@cbsso",
 						clientId            : getJavaSystem().getProperty( "MS_ENTRA_CLIENT_ID" ),
 						clientSecret        : getJavaSystem().getProperty( "MS_ENTRA_CLIENT_SECRET" ),
-						authEndpoint        : getJavaSystem().getProperty( "MS_ENTRA_SIGN_ON_ENDPOINT" )
+						authEndpoint        : getJavaSystem().getProperty( "MS_ENTRA_SIGN_ON_ENDPOINT" ),
+						expectedIssuer        : getJavaSystem().getProperty( "MS_ENTRA_ISSUER" ),
+						federationMetadataURL        : getJavaSystem().getProperty( "MS_ENTRA_FEDERATION_METADATA_URL" )
 					}
 				]
 			}

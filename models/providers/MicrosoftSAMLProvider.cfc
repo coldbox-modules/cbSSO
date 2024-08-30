@@ -5,10 +5,18 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 	property name="clientSecret";
 	property name="authEndpoint";
 	property name="redirectUri";
-
+	property name="federationMetadataURL";
+	property name="expectedIssuer";
+	
 	property name="wirebox" inject="wirebox";
+	property name="AuthNRequestGenerator" inject="javaloader:cbsso.opensaml.AuthNRequestGenerator";
+	property name="responseValidator" inject="javaloader:cbsso.opensaml.AuthResponseValidator";
 
 	variables.name = "Microsoft Entra";
+
+	public function onDIComplete(){
+		variables.AuthNRequestGenerator.initOpenSAML();
+	}
 
 	public string function getName(){
 		return variables.name;
@@ -24,12 +32,10 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 		return "#protocol##cgi.HTTP_HOST#/cbsso/auth/#variables.name.lcase()#";
 	}
 
-	public any function populateFromSettings( required struct settings ){
-		variables.Name         = settings.Name;
-		variables.clientId     = settings.clientId;
-		variables.clientSecret = settings.clientSecret;
-		variables.authEndpoint = settings.authEndpoint;
-		variables.redirectUri  = settings.redirectUri;
+	public any function setFederationMetadataURL( required string federationMetadataURL ){
+		variables.federationMetadataURL = federationMetadataURL;
+
+		responseValidator.cacheCerts( variables.federationMetadataURL );
 
 		return this;
 	}
@@ -50,6 +56,18 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 
 			authResponse.setRawResponseData( data );
 
+			try{
+				variables.AuthNRequestGenerator.initOpenSAML();
+				variables.responseValidator.parseAndValidate( javaCast( "string", data ), variables.expectedIssuer );
+			}
+			catch( any e ){
+				return authResponse
+					.setWasSuccessful( false )
+					.setRawResponseData( data )
+					.setErrorMessage( extractErrorMessage( xmlData ) )
+			}
+			
+			
 			if ( !detectSuccess( xmlData ) ) {
 				return authResponse
 					.setWasSuccessful( false )
@@ -71,13 +89,9 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 
 	private string function getRawSAMLRequest(){
 		var id = "id" & createUUID();
-		return "<samlp:AuthnRequest
-        xmlns=""urn:oasis:names:tc:SAML:2.0:metadata""
-        ID=""#id#""
-        Version=""2.0"" IssueInstant=""#now().datetimeFormat( "yyyy-mm-dd'T'HH:nn:ss.lZ" )#""
-        xmlns:samlp=""urn:oasis:names:tc:SAML:2.0:protocol"">
-        <Issuer xmlns=""urn:oasis:names:tc:SAML:2.0:assertion"">#variables.clientId#</Issuer>
-      </samlp:AuthnRequest>";
+
+		return AuthNRequestGenerator
+			.generateAuthNRequest( variables.clientId, id );
 	}
 
 	private string function deflateAndBase64Enocde( required string inputString ){

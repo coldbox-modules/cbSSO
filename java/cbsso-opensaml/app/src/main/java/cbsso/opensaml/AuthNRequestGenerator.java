@@ -18,19 +18,27 @@ import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import net.shibboleth.utilities.java.support.xml.ParserPool;
 
 public class AuthNRequestGenerator {
+
+    private static boolean initialized = false;
+
     public static String generateAuthNRequest(String issuerId, String requestId)
             throws InitializationException, ComponentInitializationException {
-        initOpenSAML();
+        // initOpenSAML();
         AuthnRequest authnRequest = buildAuthnRequest(issuerId, requestId);
         return OpenSAMLUtils.stringifySAMLObject(authnRequest);
     }
 
-    private static void initOpenSAML() throws InitializationException, ComponentInitializationException {
+    public synchronized static void initOpenSAML() throws InitializationException, ComponentInitializationException {
+        if (initialized) {
+            return;
+        }
         XMLObjectProviderRegistry registry = new XMLObjectProviderRegistry();
         ConfigurationService.register(XMLObjectProviderRegistry.class, registry);
 
         registry.setParserPool(getParserPool());
         InitializationService.initialize();
+
+        initialized = true;
     }
 
     private static ParserPool getParserPool() throws ComponentInitializationException {

@@ -1,9 +1,8 @@
 {
-    "name":"oAuth2-lucee@5",
+    "name":"oAuth2-adobe",
     "app":{
-        "serverHomeDirectory":".engine/lucee5",
-        "cfengine":"lucee@5",
-        "libDirs":"./lib"
+        "serverHomeDirectory":".engine/adobe",
+        "cfengine":"adobe@2023"
     },
     "web":{
         "http":{
@@ -20,5 +19,8 @@
     "openBrowser":"false",
     "cfconfig":{
         "file":".cfconfig.json"
+    },
+    "scripts":{
+        "onServerInitialInstall":"cfpm install zip"
     }
 }
