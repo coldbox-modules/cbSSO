@@ -7,10 +7,10 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 	property name="redirectUri";
 	property name="federationMetadataURL";
 	property name="expectedIssuer";
-	
-	property name="wirebox" inject="wirebox";
+
+	property name="wirebox"               inject="wirebox";
 	property name="AuthNRequestGenerator" inject="javaloader:cbsso.opensaml.AuthNRequestGenerator";
-	property name="responseValidator" inject="javaloader:cbsso.opensaml.AuthResponseValidator";
+	property name="responseValidator"     inject="javaloader:cbsso.opensaml.AuthResponseValidator";
 
 	variables.name = "Microsoft Entra";
 
@@ -56,18 +56,20 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 
 			authResponse.setRawResponseData( data );
 
-			try{
+			try {
 				variables.AuthNRequestGenerator.initOpenSAML();
-				variables.responseValidator.parseAndValidate( javaCast( "string", data ), variables.expectedIssuer );
-			}
-			catch( any e ){
+				variables.responseValidator.parseAndValidate(
+					javacast( "string", data ),
+					variables.expectedIssuer
+				);
+			} catch ( any e ) {
 				return authResponse
 					.setWasSuccessful( false )
 					.setRawResponseData( data )
 					.setErrorMessage( extractErrorMessage( xmlData ) )
 			}
-			
-			
+
+
 			if ( !detectSuccess( xmlData ) ) {
 				return authResponse
 					.setWasSuccessful( false )
@@ -90,8 +92,7 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 	private string function getRawSAMLRequest(){
 		var id = "id" & createUUID();
 
-		return AuthNRequestGenerator
-			.generateAuthNRequest( variables.clientId, id );
+		return AuthNRequestGenerator.generateAuthNRequest( variables.clientId, id );
 	}
 
 	private string function deflateAndBase64Enocde( required string inputString ){
