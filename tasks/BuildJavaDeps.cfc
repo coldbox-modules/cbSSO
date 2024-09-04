@@ -15,9 +15,11 @@ component {
 			.boldMagentaLine( "Executing java build" )
 			.toConsole();
 
+		print.line( rootDir & "/java/cbsso-opensaml" ).toConsole();
+
 		command( "run" )
 			.inWorkingDirectory( rootDir & "/java/cbsso-opensaml" )
-			.params( "gradlew", ":app:shadowJar" )
+			.params( "./gradlew", ":app:shadowJar" )
 			.run();
 			
 		command( "cp" )

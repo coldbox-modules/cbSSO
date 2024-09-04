@@ -65,6 +65,7 @@ jobs:
         run: |
           npm install -g markdownlint-cli
           markdownlint changelog.md --fix
+          chmod +x java/cbsso-opensaml/gradlew
           box task run taskfile=tasks/Build :version=${{ env.VERSION }} :projectName=${{ env.MODULE_ID }} :buildID=${{ github.run_number }} :branch=${{ env.BRANCH }}
 
       - name: Commit Changelog To Master
