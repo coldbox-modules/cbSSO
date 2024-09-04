@@ -14,10 +14,6 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 
 	variables.name = "Microsoft Entra";
 
-	public function onDIComplete(){
-		variables.AuthNRequestGenerator.initOpenSAML();
-	}
-
 	public string function getName(){
 		return variables.name;
 	}
@@ -156,7 +152,7 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 		variables.AuthNRequestGenerator = wirebox.getInstance( "javaloader:cbsso.opensaml.AuthNRequestGenerator" );
 		variables.responseValidator = wirebox.getInstance( "javaloader:cbsso.opensaml.AuthResponseValidator" );
 		variables.AuthNRequestGenerator.initOpenSAML();
-		
+
 		responseValidator.cacheCerts( variables.federationMetadataURL );
 	}
 

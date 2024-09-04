@@ -1,6 +1,6 @@
 {
     "name": "cbsso",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "location": "https://downloads.ortussolutions.com/ortussolutions/coldbox-modules/cbsso/@build.version@/cbsso-@build.version@.zip",
     "author": "Ortus Solutions <info@ortussolutions.com>",
     "homepage": "https://github.com/coldbox-modules/cbsso",
