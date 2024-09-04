@@ -28,14 +28,6 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 		return "#protocol##cgi.HTTP_HOST#/cbsso/auth/#variables.name.lcase()#";
 	}
 
-	public any function setFederationMetadataURL( required string federationMetadataURL ){
-		variables.federationMetadataURL = federationMetadataURL;
-
-		responseValidator.cacheCerts( variables.federationMetadataURL );
-
-		return this;
-	}
-
 	public string function startAuthenticationWorflow( required any event ){
 		var encoded = encodeForURL( deflateAndBase64Enocde( getRawSAMLRequest() ) );
 
