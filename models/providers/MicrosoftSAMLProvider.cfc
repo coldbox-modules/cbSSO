@@ -37,6 +37,8 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 	public any function processAuthorizationEvent( required any event ){
 		var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@cbsso" );
 
+		initializeOpenSAMLLib();
+
 		try {
 			var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
 			var data    = charsetEncode( decoded, "utf-8" );
@@ -79,6 +81,8 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 
 	private string function getRawSAMLRequest(){
 		var id = "id" & createUUID();
+
+		initializeOpenSAMLLib();
 
 		return AuthNRequestGenerator.generateAuthNRequest( variables.clientId, id );
 	}
