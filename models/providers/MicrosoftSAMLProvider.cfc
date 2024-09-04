@@ -9,8 +9,8 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 	property name="expectedIssuer";
 
 	property name="wirebox"               inject="wirebox";
-	property name="AuthNRequestGenerator" inject="javaloader:cbsso.opensaml.AuthNRequestGenerator";
-	property name="responseValidator"     inject="javaloader:cbsso.opensaml.AuthResponseValidator";
+	property name="AuthNRequestGenerator";
+	property name="responseValidator";
 
 	variables.name = "Microsoft Entra";
 
@@ -146,6 +146,18 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 			xmlDoc,
 			"samlp:Response//Attribute[@Name='http://schemas.microsoft.com/identity/claims/objectidentifier']"
 		)[ 1 ].xmlchildren[ 1 ].xmltext;
+	}
+
+	private void function initializeOpenSAMLLib(){
+		if( !isNull( variables.AuthNRequestGenerator ) ){
+			return;
+		}
+
+		variables.AuthNRequestGenerator = wirebox.getInstance( "javaloader:cbsso.opensaml.AuthNRequestGenerator" );
+		variables.responseValidator = wirebox.getInstance( "javaloader:cbsso.opensaml.AuthResponseValidator" );
+		variables.AuthNRequestGenerator.initOpenSAML();
+		
+		responseValidator.cacheCerts( variables.federationMetadataURL );
 	}
 
 }
