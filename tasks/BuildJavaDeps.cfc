@@ -10,8 +10,10 @@ component {
 
 		var rootDir = getCWD().reReplace( "[\\/]$", "" );
 
-		print.line( rootDir );
-		return;
+		print
+			.line()
+			.boldMagentaLine( "Executing java build" )
+			.toConsole();
 
 		command( "run" )
 			.inWorkingDirectory( rootDir & "/java/cbsso-opensaml" )
@@ -25,6 +27,11 @@ component {
 		command( "cd" )
 			.params( rootDir )
 			.run();
+
+		print
+			.line()
+			.boldMagentaLine( "Finished building java dependences: cbsso-opensaml-all.jar" )
+			.toConsole();
 	}
 
 }
