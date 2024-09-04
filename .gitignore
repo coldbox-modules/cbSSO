@@ -19,3 +19,4 @@ modules/**
 
 # log files
 logs/**
+lib/cbsso-opensaml-all.jar

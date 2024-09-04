@@ -8,8 +8,11 @@ component {
 	*/
 	function run() {
 
-		var rootDir = getCWD();
-		
+		var rootDir = getCWD().reReplace( "[\\/]$", "" );
+
+		print.line( rootDir );
+		return;
+
 		command( "run" )
 			.inWorkingDirectory( rootDir & "/java/cbsso-opensaml" )
 			.params( "gradlew", ":app:shadowJar" )
