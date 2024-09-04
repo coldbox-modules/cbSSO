@@ -53,9 +53,9 @@ component {
 				// 	redirectUri         : getSystemSetting( key = "GOOGLE_REDIRECT_URI", defaultValue = "" )
 				// }
 			],
-			cbjavaloader: {
-				loadPaths: [ modulePath & "/lib" ],
-				parentClassLoader: createObject("java", "java.lang.ClassLoader").getSystemClassLoader()
+			cbjavaloader : {
+				loadPaths         : [ modulePath & "/lib" ],
+				parentClassLoader : createObject( "java", "java.lang.ClassLoader" ).getSystemClassLoader()
 			}
 		};
 
