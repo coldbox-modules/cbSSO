@@ -12,7 +12,8 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 	property name="AuthNRequestGenerator";
 	property name="responseValidator";
 
-	variables.name = "Microsoft Entra";
+	variables.name = "Entra";
+	variables.federationMetadataURL = "";
 
 	public string function getName(){
 		return variables.name;
