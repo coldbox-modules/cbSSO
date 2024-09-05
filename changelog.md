@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2024-09-04
+
 ## [1.0.5] - 2024-09-04
 
 ## [1.0.4] - 2024-09-04
@@ -23,7 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for several SSO IP integrations
 
-[Unreleased]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.6...HEAD
+
+[1.0.6]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.5...v1.0.6
 
 [1.0.5]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.4...v1.0.5
 
