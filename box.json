@@ -23,8 +23,7 @@
     "contributors": [ ],
     "dependencies": {
         "hyper": "^7.2.1",
-        "jwt-cfml": "^1.2.0",
-        "cbjavaloader": "^2.1.1+8"
+        "jwt-cfml": "^1.2.0"
     },
     "devDependencies": {
         "commandbox-cfformat": "*",

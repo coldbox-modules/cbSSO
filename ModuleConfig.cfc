@@ -20,7 +20,7 @@ component {
 	this.entryPoint     = "/cbsso";
 
 	// Dependencies
-	this.dependencies = [ "hyper", "jwtcfml", "cbjavaloader" ];
+	this.dependencies = [ "hyper", "jwtcfml" ];
 
 	routes = [
 		{
@@ -75,8 +75,6 @@ component {
 					interceptorName       = "cbsso@global"
 				);
 		}
-
-		wireBox.getInstance( "loader@cbjavaloader" ).appendPaths( modulePath & "/lib" );
 	}
 
 	/**

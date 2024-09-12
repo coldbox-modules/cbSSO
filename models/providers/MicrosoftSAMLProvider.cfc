@@ -146,10 +146,10 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 			return;
 		}
 
-		variables.AuthNRequestGenerator = wirebox.getInstance( "javaloader:cbsso.opensaml.AuthNRequestGenerator" );
-		variables.responseValidator = wirebox.getInstance( "javaloader:cbsso.opensaml.AuthResponseValidator" );
-		variables.AuthNRequestGenerator.initOpenSAML();
+		variables.AuthNRequestGenerator = createObject( "java", "cbsso.opensaml.AuthNRequestGenerator" );
+		variables.responseValidator = createObject( "java", "cbsso.opensaml.AuthResponseValidator" );	
 
+		variables.AuthNRequestGenerator.initOpenSAML();
 		responseValidator.cacheCerts( variables.federationMetadataURL );
 	}
 

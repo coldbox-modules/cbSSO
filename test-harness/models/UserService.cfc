@@ -37,9 +37,6 @@ component {
     public any function createFromSSO( required any ssoEvent, required any provider ){
         var a = new User();
 
-        writeDump( ssoEvent );
-        abort;
-
         a.setEmail( ssoEvent.getEmail() )
             .setId( ssoEvent.getUserId() );
 
