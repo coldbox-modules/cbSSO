@@ -247,4 +247,4 @@ component {
 		variables.exportsDir = variables.artifactsDir & "/#projectName#/#arguments.version#";
 		directoryCreate( variables.exportsDir, true, true );
 	}
-}e
+}
