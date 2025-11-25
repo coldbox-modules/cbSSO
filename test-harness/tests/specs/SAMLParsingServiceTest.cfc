@@ -39,7 +39,7 @@ component extends="coldbox.system.testing.BaseTestCase" {
 			} );
 
 			it( "should extract user info from a valid SAML response", function(){
-				var rawSAMLResponse = fileRead( expandPath( "../resources/validSAMLResponse.xml" ) );
+				var rawSAMLResponse = fileRead( expandPath( "/tests/resources/validSAMLResponse.xml" ) );
 				var result          = service.extractUserInfo( rawSAMLResponse );
 
 				expect( result.success ).toBeTrue();
@@ -49,7 +49,7 @@ component extends="coldbox.system.testing.BaseTestCase" {
 			} );
 
 			it( "should return an error message from the xml", function(){
-				var rawSAMLResponse = fileRead( expandPath( "../resources/errorSAMLResponse.xml" ) );
+				var rawSAMLResponse = fileRead( expandPath( "/tests/resources/errorSAMLResponse.xml" ) );
 				var result          = service.extractUserInfo( rawSAMLResponse );
 
 				expect( result.success ).toBeFalse();
