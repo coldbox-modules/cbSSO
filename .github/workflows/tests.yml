@@ -2,6 +2,7 @@ name: Test Suites
 
 # We are a reusable Workflow only
 on:
+  workflow_dispatch:
   workflow_call:
     secrets:
       SLACK_WEBHOOK_URL:
@@ -128,15 +129,15 @@ jobs:
             .engine/**/logs/*
             .engine/**/WEB-INF/cfusion/logs/*
 
-      - name: Slack Notifications
-        # Only on failures and NOT in pull requests
-        if: ${{ failure() && !startsWith( 'pull_request', github.event_name ) }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: coding
-          SLACK_COLOR: ${{ job.status }} # or a specific color like 'green' or '#ff00ff'
-          SLACK_ICON_EMOJI: ":bell:"
-          SLACK_MESSAGE: '${{ github.repository }} tests failed :cry:'
-          SLACK_TITLE: ${{ github.repository }} Tests For ${{ matrix.cfengine }} with ColdBox ${{ matrix.coldboxVersion }} failed
-          SLACK_USERNAME: CI
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+      # - name: Slack Notifications
+      #   # Only on failures and NOT in pull requests
+      #   if: ${{ failure() && !startsWith( 'pull_request', github.event_name ) }}
+      #   uses: rtCamp/action-slack-notify@v2
+      #   env:
+      #     SLACK_CHANNEL: coding
+      #     SLACK_COLOR: ${{ job.status }} # or a specific color like 'green' or '#ff00ff'
+      #     SLACK_ICON_EMOJI: ":bell:"
+      #     SLACK_MESSAGE: '${{ github.repository }} tests failed :cry:'
+      #     SLACK_TITLE: ${{ github.repository }} Tests For ${{ matrix.cfengine }} with ColdBox ${{ matrix.coldboxVersion }} failed
+      #     SLACK_USERNAME: CI
+      #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
