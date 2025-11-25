@@ -1,6 +1,6 @@
 component
-	accessors="true"
-	extends="BaseProvider"
+	accessors ="true"
+	extends   ="BaseProvider"
 	implements="cbsso.models.ISSOIntegrationProvider"
 {
 
