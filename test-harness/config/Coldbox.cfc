@@ -66,31 +66,32 @@
 					{
 						// name: "google",
 						type: "GoogleProvider@cbsso",
-						clientId            : getJavaSystem().getProperty( "GOOGLE_CLIENT_ID" ),
-						clientSecret        : getJavaSystem().getProperty( "GOOGLE_CLIENT_SECRET" )
+						clientId            : getSystemSetting( "GOOGLE_CLIENT_ID" ),
+						clientSecret        : getSystemSetting( "GOOGLE_CLIENT_SECRET" )
 					},
 					{
 						type: "GitHubProvider@cbsso",
-						clientId            : getJavaSystem().getProperty( "GITHUB_CLIENT_ID" ),
-						clientSecret        : getJavaSystem().getProperty( "GITHUB_CLIENT_SECRET" )
+						clientId            : getSystemSetting( "GITHUB_CLIENT_ID" ),
+						clientSecret        : getSystemSetting( "GITHUB_CLIENT_SECRET" )
 					},
 					{
 						type: "FacebookProvider@cbsso",
-						clientId            : getJavaSystem().getProperty( "FACEBOOK_CLIENT_ID" ),
-						clientSecret        : getJavaSystem().getProperty( "FACEBOOK_CLIENT_SECRET" )
+						clientId            : getSystemSetting( "FACEBOOK_CLIENT_ID" ),
+						clientSecret        : getSystemSetting( "FACEBOOK_CLIENT_SECRET" )
 					},
 					{
 						name: "entra",
 						type: "MicrosoftSAMLProvider@cbsso",
-						clientId            : getJavaSystem().getProperty( "MS_ENTRA_CLIENT_ID" ),
-						clientSecret        : getJavaSystem().getProperty( "MS_ENTRA_CLIENT_SECRET" ),
-						authEndpoint        : getJavaSystem().getProperty( "MS_ENTRA_SIGN_ON_ENDPOINT" ),
-						expectedIssuer        : getJavaSystem().getProperty( "MS_ENTRA_ISSUER" ),
-						federationMetadataURL        : getJavaSystem().getProperty( "MS_ENTRA_FEDERATION_METADATA_URL" )
+						clientId            : getSystemSetting( "MS_ENTRA_CLIENT_ID" ),
+						clientSecret        : getSystemSetting( "MS_ENTRA_CLIENT_SECRET" ),
+						authEndpoint        : getSystemSetting( "MS_ENTRA_SIGN_ON_ENDPOINT" ),
+						expectedIssuer        : getSystemSetting( "MS_ENTRA_ISSUER" ),
+						federationMetadataURL        : getSystemSetting( "MS_ENTRA_FEDERATION_METADATA_URL" )
 					}
 				]
 			}
 		};
+
 
 		// environment settings, create a detectEnvironment() method to detect it yourself.
 		// create a function with the name of the environment so it can be executed if that environment is detected

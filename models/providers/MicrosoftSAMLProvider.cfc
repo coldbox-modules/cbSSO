@@ -1,4 +1,8 @@
-component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
+component
+	accessors="true"
+	extends="BaseProvider"
+	implements="cbsso.models.ISSOIntegrationProvider"
+{
 
 	property name="Name";
 	property name="clientId";
@@ -11,6 +15,7 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 	property name="wirebox"               inject="wirebox";
 	property name="AuthNRequestGenerator" inject="javaloader:cbsso.opensaml.AuthNRequestGenerator";
 	property name="responseValidator"     inject="javaloader:cbsso.opensaml.AuthResponseValidator";
+	property name="SAMLParsingService"     inject="SAMLParsingService@cbsso";
 
 	variables.name = "Microsoft Entra";
 
@@ -20,16 +25,6 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 
 	public string function getName(){
 		return variables.name;
-	}
-
-	public string function getRedirectUri(){
-		if ( !isNull( variables.redirectUri ) ) {
-			return variables.redirectUri;
-		}
-
-		var protocol = cgi.HTTPS == "" ? "http://" : "https://";
-
-		return "#protocol##cgi.HTTP_HOST#/cbsso/auth/#variables.name.lcase()#";
 	}
 
 	public any function setFederationMetadataURL( required string federationMetadataURL ){
@@ -52,7 +47,7 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 		try {
 			var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
 			var data    = charsetEncode( decoded, "utf-8" );
-			var xmlData = xmlParse( data.reREplace( "xmlns="".+?""", "", "all" ) );
+			var samlData = SAMLParsingService.extractUserInfo( data );
 
 			authResponse.setRawResponseData( data );
 
@@ -70,19 +65,19 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 			}
 
 
-			if ( !detectSuccess( xmlData ) ) {
+			if ( !samlData.success ) {
 				return authResponse
 					.setWasSuccessful( false )
 					.setRawResponseData( data )
-					.setErrorMessage( extractErrorMessage( xmlData ) );
+					.setErrorMessage( samlData.errorMessage );
 			}
 
 			return authResponse
 				.setWasSuccessful( true )
-				.setFirstName( extractFirstName( xmlData ) )
-				.setLastName( extractLastName( xmlData ) )
-				.setEmail( extractEmail( xmlData ) )
-				.setUserId( extractUserId( xmlData ) )
+				.setFirstName( samlData.firstName )
+				.setLastName( samlData.lastName )
+				.setEmail( samlData.email )
+				.setUserId( samlData.userId )
 				.setRawResponseData( data );
 		} catch ( any e ) {
 			return authResponse.setWasSuccessful( false ).setErrorMessage( e.message );
@@ -112,39 +107,39 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 	private boolean function detectSuccess( required xmlDoc ){
 		return xmlSearch(
 			xmlDoc,
-			"samlp:Response//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']"
+			"//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']"
 		).len() == 1;
 	}
 
 	private boolean function extractErrorMessage( required xmlDoc ){
-		return xmlSearch( xmlDoc, "samlp:Response//samlp:StatusMessage" )[ 1 ].xmlchildren[ 1 ].xmltext;
+		return xmlSearch( xmlDoc, "//samlp:StatusMessage" )[ 1 ].xmlchildren[ 1 ].xmltext;
 	}
 
 	private string function extractFirstName( required xmlDoc ){
 		return xmlSearch(
 			xmlDoc,
-			"samlp:Response//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']"
+			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']"
 		)[ 1 ].xmlchildren[ 1 ].xmltext;
 	}
 
 	private string function extractLastName( required xmlDoc ){
 		return xmlSearch(
 			xmlDoc,
-			"samlp:Response//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname']"
+			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname']"
 		)[ 1 ].xmlchildren[ 1 ].xmltext;
 	}
 
 	private string function extractEmail( required xmlDoc ){
 		return xmlSearch(
 			xmlDoc,
-			"samlp:Response//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']"
+			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']"
 		)[ 1 ].xmlchildren[ 1 ].xmltext;
 	}
 
 	private string function extractUserId( required xmlDoc ){
 		return xmlSearch(
 			xmlDoc,
-			"samlp:Response//Attribute[@Name='http://schemas.microsoft.com/identity/claims/objectidentifier']"
+			"//Attribute[@Name='http://schemas.microsoft.com/identity/claims/objectidentifier']"
 		)[ 1 ].xmlchildren[ 1 ].xmltext;
 	}
 

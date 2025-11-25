@@ -1,0 +1,18 @@
+<bx:script>
+    a = fileread( "../test-entra.xml")
+    theXML = xmlParse( a.reReplace( "xmlns="".+?""", "", "all" ) );
+    // found = xmlSearch( theXML, '//samlp:StatusCode[@Value="urn:oasis:names:tc:SAML:2.0:status:Success"]'  )
+
+    // found = xmlSearch(
+	// 		theXML,
+	// 		"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']"
+	// 	)[ 1 ].xmlchildren[ 1 ].xmltext;
+    found = xmlSearch(
+			theXML,
+			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']"
+		)[ 1 ].xmlchildren[ 1 ].xmltext;
+
+    dump( found.len() )
+    dump( found )
+    dump( theXML )
+</bx:script>

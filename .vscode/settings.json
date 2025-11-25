@@ -10,5 +10,6 @@
 			"directoryPath": "./test-harness/testbox",
 			"isPhysicalDirectoryPath": false
 		}
-	]
+	],
+	"java.configuration.updateBuildConfiguration": "interactive"
 }
