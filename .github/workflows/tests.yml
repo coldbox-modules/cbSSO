@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         cfengine: [ "lucee@5", "boxlang@1" ]
-        coldboxVersion: [ "^6.0.0", "^7.0.0" ]
+        coldboxVersion: [ "^7.0.0", "^8.0.0" ]
         experimental: [ false ]
         # Here we tests all engines against ColdBox@BE
         include:

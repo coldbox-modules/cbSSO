@@ -35,9 +35,9 @@ jobs:
   ##########################################################################################
   # Release it
   ##########################################################################################
-  # release:
-  #   uses: ./.github/workflows/release.yml
-  #   needs: [ format ]
-  #   secrets: inherit
-  #   with:
-  #     snapshot: true
+  release:
+    uses: ./.github/workflows/release.yml
+    needs: [ format ]
+    secrets: inherit
+    with:
+      snapshot: true
