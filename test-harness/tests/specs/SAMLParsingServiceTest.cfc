@@ -40,29 +40,31 @@ component extends="coldbox.system.testing.BaseTestCase" {
 
 			it( "should extract user info from a valid SAML response", function(){
 				var rawSAMLResponse = fileRead( expandPath( "../resources/validSAMLResponse.xml" ) );
-				var result         = service.extractUserInfo( rawSAMLResponse );
+				var result          = service.extractUserInfo( rawSAMLResponse );
 
 				expect( result.success ).toBeTrue();
 				expect( result.firstName ).toBe( "Jacob" );
 				expect( result.lastName ).toBe( "Beers" );
-				expect( result.email ).toBe( "jbeers@ortussolutions.com" );			
+				expect( result.email ).toBe( "jbeers@ortussolutions.com" );
 			} );
 
 			it( "should return an error message from the xml", function(){
 				var rawSAMLResponse = fileRead( expandPath( "../resources/errorSAMLResponse.xml" ) );
-				var result         = service.extractUserInfo( rawSAMLResponse );
+				var result          = service.extractUserInfo( rawSAMLResponse );
 
 				expect( result.success ).toBeFalse();
 				expect( result.errorMessage ).toBe( "Invalid Content" );
 			} );
 
 			it( "should return an error response if it can't parse the xml", function(){
-				var result         = service.extractUserInfo( "<data></data>" );
+				var result = service.extractUserInfo( "<data></data>" );
 
 				expect( result.success ).toBeFalse();
-				expect( result.errorMessage ).toStartWith( "Invalid SAML Response - could not extract error message." );
+				expect( result.errorMessage ).toStartWith(
+					"Invalid SAML Response - could not extract error message."
+				);
 			} );
-		});
+		} );
 	}
 
 }

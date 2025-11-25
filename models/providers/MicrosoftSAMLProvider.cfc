@@ -1,6 +1,6 @@
 component
-	accessors="true"
-	extends="BaseProvider"
+	accessors ="true"
+	extends   ="BaseProvider"
 	implements="cbsso.models.ISSOIntegrationProvider"
 {
 
@@ -15,7 +15,7 @@ component
 	property name="wirebox"               inject="wirebox";
 	property name="AuthNRequestGenerator" inject="javaloader:cbsso.opensaml.AuthNRequestGenerator";
 	property name="responseValidator"     inject="javaloader:cbsso.opensaml.AuthResponseValidator";
-	property name="SAMLParsingService"     inject="SAMLParsingService@cbsso";
+	property name="SAMLParsingService"    inject="SAMLParsingService@cbsso";
 
 	variables.name = "Microsoft Entra";
 
@@ -45,8 +45,8 @@ component
 		var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@cbsso" );
 
 		try {
-			var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
-			var data    = charsetEncode( decoded, "utf-8" );
+			var decoded  = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
+			var data     = charsetEncode( decoded, "utf-8" );
 			var samlData = SAMLParsingService.extractUserInfo( data );
 
 			authResponse.setRawResponseData( data );
@@ -105,10 +105,7 @@ component
 	}
 
 	private boolean function detectSuccess( required xmlDoc ){
-		return xmlSearch(
-			xmlDoc,
-			"//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']"
-		).len() == 1;
+		return xmlSearch( xmlDoc, "//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']" ).len() == 1;
 	}
 
 	private boolean function extractErrorMessage( required xmlDoc ){
