@@ -78,7 +78,7 @@ jobs:
           printf "MS_ENTRA_CLIENT_ID=test\n" >> .env
           printf "MS_ENTRA_CLIENT_SECRET=test\n" >> .env
           printf "MS_ENTRA_SIGN_ON_ENDPOINT=test\n" >> .env
-          printf "MS_ENTRA_FEDERATION_METADATA_URL=test\n" >> .env
+          printf "MS_ENTRA_FEDERATION_METADATA_URL=https://login.microsoftonline.com/2b263285-61e2-49c4-a257-8234f38486a2/federationmetadata/2007-06/federationmetadata.xml\n" >> .env
           printf "MS_ENTRA_ISSUER=test\n" >> .env
 
       - name: Install Test Harness with ColdBox ${{ matrix.coldboxVersion }}
