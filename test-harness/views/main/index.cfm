@@ -5,7 +5,7 @@ Module Tester
     try{
 
         user = getInstance( "AuthenticationService@cbauth" ).getUser();
-        writeDUmp( user );   
+        writeDUmp( user.getEmail() );   
     }
     catch( NoUserLoggedIn e ){
         writeDump( [ "no user" ] );
