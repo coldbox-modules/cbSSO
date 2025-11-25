@@ -49,6 +49,7 @@ jobs:
       - name: Build Java Deps
         run: |
          cd java/cbsso-opensaml
+         chmod +x ./gradlew
          ./gradlew :app:build
 
       - name: Setup CommandBox CLI
