@@ -81,24 +81,6 @@ jobs:
           printf "MS_ENTRA_FEDERATION_METADATA_URL=test\n" >> .env
           printf "MS_ENTRA_ISSUER=test\n" >> .env
 
-      - name: "Setup Environment Variables For Tests"
-        id: current_version
-        run: |
-          # master or snapshot
-          echo "Github Ref is $GITHUB_REF"
-
-          # Setup .env
-          touch ./test-harness/.env
-          printf "GOOGLE_CLIENT_ID=new_google_id\n" >> ./test-harness/.env
-          printf "GOOGLE_CLIENT_SECRET=google_secret\n" >> ./test-harness/.env
-          printf "GITHUB_CLIENT_ID=test-value\n" >> ./test-harness/.env
-          printf "GITHUB_CLIENT_SECRET=test-value\n" >> ./test-harness/.env
-          printf "FACEBOOK_CLIENT_ID=test-value\n" >> ./test-harness/.env
-          printf "FACEBOOK_CLIENT_SECRET=test-value\n" >> ./test-harness/.env
-          printf "MS_ENTRA_CLIENT_ID=test-value\n" >> ./test-harness/.env
-          printf "MS_ENTRA_CLIENT_SECRET=test-value\n" >> ./test-harness/.env
-          printf "MS_ENTRA_SIGN_ON_ENDPOINT=test-value\n" >> ./test-harness/.env
-
       - name: Install Test Harness with ColdBox ${{ matrix.coldboxVersion }}
         run: |
           box install
@@ -109,7 +91,7 @@ jobs:
       - name: Start ${{ matrix.cfengine }} Server
         run: |
           box server start serverConfigFile="server-${{ matrix.cfengine }}.json" --noSaveSettings --debug
-          curl http://127.0.0.1:60299
+          curl http://127.0.0.1:9181
 
       - name: Run Tests
         run: |
