@@ -24,13 +24,14 @@
     "dependencies":{
         "hyper":"^7.2.1",
         "jwt-cfml":"^1.2.0",
-        "cbjavaloader":"^2.1.1+8"
+        "cbjavaloader":"^2.1.1+8"        
     },
     "devDependencies":{
         "commandbox-cfformat":"*",
         "commandbox-docbox":"*",
         "commandbox-dotenv":"*",
-        "commandbox-cfconfig":"*"
+        "commandbox-cfconfig":"*",
+        "bx-esapi":"^1.6.0+9"
     },
     "ignore":[
         "**/.*",
@@ -62,6 +63,7 @@
     "installPaths":{
         "hyper":"modules/hyper/",
         "jwt-cfml":"modules/jwtcfml/",
-        "cbjavaloader":"modules/cbjavaloader/"
+        "cbjavaloader":"modules/cbjavaloader/",
+        "bx-esapi":".engine/boxlang/WEB-INF/boxlang/modules/bx-esapi/"
     }
 }
