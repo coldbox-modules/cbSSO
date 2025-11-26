@@ -20,7 +20,7 @@ component {
 	this.entryPoint     = "/cbsso";
 
 	// Dependencies
-	this.dependencies = [ "hyper", "jwtcfml", "cbjavaloader" ];
+	this.dependencies = [ "hyper", "jwtcfml" ];
 
 	routes = [
 		{
@@ -52,11 +52,7 @@ component {
 				// 	accessTokenEndpoint : "https://www.googleapis.com/oauth2/v4/token",
 				// 	redirectUri         : getSystemSetting( key = "GOOGLE_REDIRECT_URI", defaultValue = "" )
 				// }
-			],
-			cbjavaloader : {
-				loadPaths         : [ modulePath & "/lib" ],
-				parentClassLoader : createObject( "java", "java.lang.ClassLoader" ).getSystemClassLoader()
-			}
+			]
 		};
 
 		interceptorSettings = { customInterceptionPoints : [ "CBSSOMissingProvider", "CBSSOAuthorization" ] };

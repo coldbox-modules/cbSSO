@@ -13,15 +13,12 @@ component
 	property name="expectedIssuer";
 
 	property name="wirebox"               inject="wirebox";
-	property name="AuthNRequestGenerator" inject="javaloader:cbsso.opensaml.AuthNRequestGenerator";
-	property name="responseValidator"     inject="javaloader:cbsso.opensaml.AuthResponseValidator";
+	property name="AuthNRequestGenerator" ;
+	property name="responseValidator"     ;
 	property name="SAMLParsingService"    inject="SAMLParsingService@cbsso";
 
-	variables.name = "Microsoft Entra";
-
-	public function onDIComplete(){
-		variables.AuthNRequestGenerator.initOpenSAML();
-	}
+	variables.name = "Entra";
+	variables.federationMetadataURL = "";
 
 	public string function getName(){
 		return variables.name;
@@ -43,6 +40,8 @@ component
 
 	public any function processAuthorizationEvent( required any event ){
 		var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@cbsso" );
+
+		initializeOpenSAMLLib();
 
 		try {
 			var decoded  = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
@@ -86,6 +85,8 @@ component
 
 	private string function getRawSAMLRequest(){
 		var id = "id" & createUUID();
+
+		initializeOpenSAMLLib();
 
 		return AuthNRequestGenerator.generateAuthNRequest( variables.clientId, id );
 	}
@@ -138,6 +139,18 @@ component
 			xmlDoc,
 			"//Attribute[@Name='http://schemas.microsoft.com/identity/claims/objectidentifier']"
 		)[ 1 ].xmlchildren[ 1 ].xmltext;
+	}
+
+	private void function initializeOpenSAMLLib(){
+		if( !isNull( variables.AuthNRequestGenerator ) ){
+			return;
+		}
+
+		variables.AuthNRequestGenerator = createObject( "java", "cbsso.opensaml.AuthNRequestGenerator" );
+		variables.responseValidator = createObject( "java", "cbsso.opensaml.AuthResponseValidator" );	
+
+		variables.AuthNRequestGenerator.initOpenSAML();
+		responseValidator.cacheCerts( variables.federationMetadataURL );
 	}
 
 }

@@ -1,8 +1,9 @@
 {
-    "name":"oAuth2-adobe",
+    "name":"cbsso-adobe21",
     "app":{
         "serverHomeDirectory":".engine/adobe",
-        "cfengine":"adobe@2023"
+        "cfengine":"adobe@2021",
+        "libDirs":"lib"
     },
     "web":{
         "http":{

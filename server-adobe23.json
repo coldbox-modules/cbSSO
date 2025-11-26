@@ -1,0 +1,27 @@
+{
+    "name":"cbsso-adobe23",
+    "app":{
+        "serverHomeDirectory":".engine/adobe23",
+        "cfengine":"adobe@2023",
+        "libDirs":"lib"
+    },
+    "web":{
+        "http":{
+            "port":"2140"
+        },
+        "rewrites":{
+            "enable":"true"
+        },
+        "webroot":"test-harness",
+        "aliases":{
+            "/moduleroot/cbSSO":"../"
+        }
+    },
+    "openBrowser":"false",
+    "cfconfig":{
+        "file":".cfconfig.json"
+    },
+    "scripts":{
+        "onServerInitialInstall":"cfpm install zip"
+    }
+}
