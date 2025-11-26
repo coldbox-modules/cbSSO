@@ -12,12 +12,12 @@ component
 	property name="federationMetadataURL";
 	property name="expectedIssuer";
 
-	property name="wirebox"               inject="wirebox";
-	property name="AuthNRequestGenerator" ;
-	property name="responseValidator"     ;
-	property name="SAMLParsingService"    inject="SAMLParsingService@cbsso";
+	property name="wirebox" inject="wirebox";
+	property name="AuthNRequestGenerator";
+	property name="responseValidator";
+	property name="SAMLParsingService" inject="SAMLParsingService@cbsso";
 
-	variables.name = "Entra";
+	variables.name                  = "Entra";
 	variables.federationMetadataURL = "";
 
 	public string function getName(){
@@ -142,12 +142,12 @@ component
 	}
 
 	private void function initializeOpenSAMLLib(){
-		if( !isNull( variables.AuthNRequestGenerator ) ){
+		if ( !isNull( variables.AuthNRequestGenerator ) ) {
 			return;
 		}
 
 		variables.AuthNRequestGenerator = createObject( "java", "cbsso.opensaml.AuthNRequestGenerator" );
-		variables.responseValidator = createObject( "java", "cbsso.opensaml.AuthResponseValidator" );	
+		variables.responseValidator     = createObject( "java", "cbsso.opensaml.AuthResponseValidator" );
 
 		variables.AuthNRequestGenerator.initOpenSAML();
 		responseValidator.cacheCerts( variables.federationMetadataURL );
