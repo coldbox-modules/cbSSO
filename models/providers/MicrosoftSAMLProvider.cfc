@@ -27,6 +27,8 @@ component
 	public any function setFederationMetadataURL( required string federationMetadataURL ){
 		variables.federationMetadataURL = federationMetadataURL;
 
+		initializeOpenSAMLLib();
+
 		responseValidator.cacheCerts( variables.federationMetadataURL );
 
 		return this;
