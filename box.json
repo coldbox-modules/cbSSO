@@ -1,13 +1,13 @@
 {
-    "name": "cbsso",
-    "version": "1.0.7",
-    "location": "https://downloads.ortussolutions.com/ortussolutions/coldbox-modules/cbsso/@build.version@/cbsso-@build.version@.zip",
-    "author": "Ortus Solutions <info@ortussolutions.com>",
-    "homepage": "https://github.com/coldbox-modules/cbsso",
-    "documentation": "https://github.com/coldbox-modules/cbsso",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/coldbox-modules/cbsso"
+    "name":"cbsso",
+    "version":"2.0.0",
+    "location":"https://downloads.ortussolutions.com/ortussolutions/coldbox-modules/cbsso/@build.version@/cbsso-@build.version@.zip",
+    "author":"Ortus Solutions <info@ortussolutions.com>",
+    "homepage":"https://github.com/coldbox-modules/cbsso",
+    "documentation":"https://github.com/coldbox-modules/cbsso",
+    "repository":{
+        "type":"git",
+        "url":"https://github.com/coldbox-modules/cbsso"
     },
     "bugs": "https://github.com/coldbox-modules/cbsso",
     "shortDescription": "Description goes here",
@@ -20,16 +20,18 @@
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         }
     ],
-    "contributors": [ ],
-    "dependencies": {
-        "hyper": "^7.2.1",
-        "jwt-cfml": "^1.2.0"
+    "contributors":[],
+    "dependencies":{
+        "hyper":"^7.2.1",
+        "jwt-cfml":"^1.2.0",
+        "cbjavaloader":"^2.1.1+8"        
     },
-    "devDependencies": {
-        "commandbox-cfformat": "*",
-        "commandbox-docbox": "*",
-        "commandbox-dotenv": "*",
-        "commandbox-cfconfig": "*"
+    "devDependencies":{
+        "commandbox-cfformat":"*",
+        "commandbox-docbox":"*",
+        "commandbox-dotenv":"*",
+        "commandbox-cfconfig":"*",
+        "bx-esapi":"^1.6.0+9"
     },
     "ignore": [
         "**/.*",
@@ -55,12 +57,13 @@
         "logs:2018": "server log serverConfigFile=server-adobe@2018.json --follow",
         "logs:2021": "server log serverConfigFile=server-adobe@2021.json --follow"
     },
-    "testbox": {
-        "runner": "http://localhost:60299/tests/runner.cfm"
+    "testbox":{
+        "runner":"http://localhost:9181/tests/runner.cfm"
     },
-    "installPaths": {
-        "hyper": "modules/hyper/",
-        "jwt-cfml": "modules/jwtcfml/",
-        "cbjavaloader": "modules/cbjavaloader/"
+    "installPaths":{
+        "hyper":"modules/hyper/",
+        "jwt-cfml":"modules/jwtcfml/",
+        "cbjavaloader":"modules/cbjavaloader/",
+        "bx-esapi":".engine/boxlang/WEB-INF/boxlang/modules/bx-esapi/"
     }
 }

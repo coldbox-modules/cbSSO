@@ -1,13 +1,13 @@
 {
-    "name":"oAuth2-lucee@5",
+    "name":"cbsso-lucee",
     "app":{
         "serverHomeDirectory":".engine/lucee5",
         "cfengine":"lucee@5",
-        "libDirs":"./lib"
+        "libDirs":"./java/cbsso-opensaml/app/build/libs"
     },
     "web":{
         "http":{
-            "port":"2140"
+            "port":"9181"
         },
         "rewrites":{
             "enable":"true"

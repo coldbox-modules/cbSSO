@@ -2,6 +2,7 @@ name: Test Suites
 
 # We are a reusable Workflow only
 on:
+  workflow_dispatch:
   workflow_call:
     secrets:
       SLACK_WEBHOOK_URL:
@@ -10,7 +11,7 @@ on:
 jobs:
   tests:
     name: Tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       DB_USER: root
       DB_PASSWORD: root
@@ -18,8 +19,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cfengine: [ "lucee@5" ]
-        coldboxVersion: [ "^6.0.0", "^7.0.0" ]
+        cfengine: [ "lucee@5", "boxlang@1" ]
+        coldboxVersion: [ "^7.0.0", "^8.0.0" ]
         experimental: [ false ]
         # Here we tests all engines against ColdBox@BE
         include:
@@ -45,41 +46,40 @@ jobs:
           distribution: "temurin"
           java-version: "11"
 
+      - name: Build Java Deps
+        run: |
+         cd java/cbsso-opensaml
+         chmod +x ./gradlew
+         ./gradlew :app:build
+
       - name: Setup CommandBox CLI
         uses: Ortus-Solutions/setup-commandbox@v2.0.1
 
       # Not Needed in this module
-      #- name: Setup Environment For Testing Process
-      #  run: |
-      #    # Setup .env
-      #    touch .env
-      #    # ENV
-      #    printf "DB_HOST=localhost\n" >> .env
-      #    printf "DB_DATABASE=mydatabase\n" >> .env
-      #    printf "DB_DRIVER=MySQL\n" >> .env
-      #    printf "DB_USER=${{ env.DB_USER }}\n" >> .env
-      #    printf "DB_PASSWORD=${{ env.DB_PASSWORD }}\n" >> .env
-      #    printf "DB_CLASS=com.mysql.cj.jdbc.Driver\n" >> .env
-      #    printf "DB_BUNDLEVERSION=8.0.19\n" >> .env
-      #    printf "DB_BUNDLENAME=com.mysql.cj\n" >> .env
-
-      - name: "Setup Environment Variables For Tests"
-        id: current_version
+      - name: Setup Environment For Testing Process
         run: |
-          # master or snapshot
-          echo "Github Ref is $GITHUB_REF"
-
           # Setup .env
-          touch ./test-harness/.env
-          printf "GOOGLE_CLIENT_ID=new_google_id\n" >> ./test-harness/.env
-          printf "GOOGLE_CLIENT_SECRET=google_secret\n" >> ./test-harness/.env
-          printf "GITHUB_CLIENT_ID=test-value\n" >> ./test-harness/.env
-          printf "GITHUB_CLIENT_SECRET=test-value\n" >> ./test-harness/.env
-          printf "FACEBOOK_CLIENT_ID=test-value\n" >> ./test-harness/.env
-          printf "FACEBOOK_CLIENT_SECRET=test-value\n" >> ./test-harness/.env
-          printf "MS_ENTRA_CLIENT_ID=test-value\n" >> ./test-harness/.env
-          printf "MS_ENTRA_CLIENT_SECRET=test-value\n" >> ./test-harness/.env
-          printf "MS_ENTRA_SIGN_ON_ENDPOINT=test-value\n" >> ./test-harness/.env
+          touch .env
+          # ENV
+          printf "DB_HOST=localhost\n" >> .env
+          printf "GOOGLE_CLIENT_ID=test\n" >> .env
+          printf "GOOGLE_CLIENT_SECRET=test\n" >> .env
+          printf "GOOGLE_REDIRECT_URI=test\n" >> .env
+          printf "GOOGLE_AUTH_ENDPOINT=test\n" >> .env
+          printf "GOOGLE_ACCESS_TOKEN=test\n" >> .env
+          printf "GITHUB_CLIENT_ID=test\n" >> .env
+          printf "GITHUB_CLIENT_SECRET=test\n" >> .env
+          printf "GITHUB_REDIRECT_URI=test\n" >> .env
+          printf "GITHUB_AUTH_ENDPOINT=test\n" >> .env
+          printf "GITHUB_ACCESS_TOKEN=test\n" >> .env
+          printf "FACEBOOK_CLIENT_ID=test\n" >> .env
+          printf "FACEBOOK_CLIENT_SECRET=test\n" >> .env
+          printf "MS_ENTRA_REDIRECT_URI=test\n" >> .env
+          printf "MS_ENTRA_CLIENT_ID=test\n" >> .env
+          printf "MS_ENTRA_CLIENT_SECRET=test\n" >> .env
+          printf "MS_ENTRA_SIGN_ON_ENDPOINT=test\n" >> .env
+          printf "MS_ENTRA_FEDERATION_METADATA_URL=https://login.microsoftonline.com/2b263285-61e2-49c4-a257-8234f38486a2/federationmetadata/2007-06/federationmetadata.xml\n" >> .env
+          printf "MS_ENTRA_ISSUER=test\n" >> .env
 
       - name: Install Test Harness with ColdBox ${{ matrix.coldboxVersion }}
         run: |
@@ -91,7 +91,7 @@ jobs:
       - name: Start ${{ matrix.cfengine }} Server
         run: |
           box server start serverConfigFile="server-${{ matrix.cfengine }}.json" --noSaveSettings --debug
-          curl http://127.0.0.1:60299
+          curl http://127.0.0.1:9181
 
       - name: Run Tests
         run: |
@@ -108,7 +108,7 @@ jobs:
 
       - name: Upload Test Results to Artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.cfengine }}-${{ matrix.coldboxVersion }}
           path: |
@@ -121,22 +121,22 @@ jobs:
 
       - name: Upload Debug Logs To Artifacts
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Failure Debugging Info - ${{ matrix.cfengine }} - ${{ matrix.coldboxVersion }}
           path: |
             .engine/**/logs/*
             .engine/**/WEB-INF/cfusion/logs/*
 
-      - name: Slack Notifications
-        # Only on failures and NOT in pull requests
-        if: ${{ failure() && !startsWith( 'pull_request', github.event_name ) }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: coding
-          SLACK_COLOR: ${{ job.status }} # or a specific color like 'green' or '#ff00ff'
-          SLACK_ICON_EMOJI: ":bell:"
-          SLACK_MESSAGE: '${{ github.repository }} tests failed :cry:'
-          SLACK_TITLE: ${{ github.repository }} Tests For ${{ matrix.cfengine }} with ColdBox ${{ matrix.coldboxVersion }} failed
-          SLACK_USERNAME: CI
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+      # - name: Slack Notifications
+      #   # Only on failures and NOT in pull requests
+      #   if: ${{ failure() && !startsWith( 'pull_request', github.event_name ) }}
+      #   uses: rtCamp/action-slack-notify@v2
+      #   env:
+      #     SLACK_CHANNEL: coding
+      #     SLACK_COLOR: ${{ job.status }} # or a specific color like 'green' or '#ff00ff'
+      #     SLACK_ICON_EMOJI: ":bell:"
+      #     SLACK_MESSAGE: '${{ github.repository }} tests failed :cry:'
+      #     SLACK_TITLE: ${{ github.repository }} Tests For ${{ matrix.cfengine }} with ColdBox ${{ matrix.coldboxVersion }} failed
+      #     SLACK_USERNAME: CI
+      #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}

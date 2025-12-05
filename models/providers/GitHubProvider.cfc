@@ -1,4 +1,8 @@
-component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
+component
+	accessors ="true"
+	extends   ="BaseProvider"
+	implements="cbsso.models.ISSOIntegrationProvider"
+{
 
 	property name="Name";
 	property name="clientId";
@@ -21,16 +25,6 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 
 	public string function getName(){
 		return variables.name;
-	}
-
-	public string function getRedirectUri(){
-		if ( !isNull( variables.redirectUri ) ) {
-			return variables.redirectUri;
-		}
-
-		var protocol = cgi.HTTPS == "" ? "http://" : "https://";
-
-		return "#protocol##cgi.HTTP_HOST#/cbsso/auth/#variables.name.lcase()#";
 	}
 
 	public string function startAuthenticationWorflow( required any event ){
@@ -62,7 +56,7 @@ component accessors="true" implements="cbsso.models.ISSOIntegrationProvider" {
 			var res = oAuthService.makeAccessTokenRequest(
 				getClientId(),
 				getClientSecret(),
-				getRedirectUri(),
+				getRedirectUri( event ),
 				getAccessTokenEndpoint(),
 				event.getValue( "code" )
 			);

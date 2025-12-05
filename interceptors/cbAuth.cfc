@@ -6,6 +6,10 @@ component {
         var authService = getInstance( "authenticationService@cbauth" );
         var userService = authService.getUserService();
 
+        if( !data.ssoAuthorizationEvent.wasSuccessful() ){
+            relocate( moduleSettings.errorRedirect );
+        }
+
         var user = userService.findBySSO( data.ssoAuthorizationEvent, data.provider );
 
         if( isNull( user ) ){

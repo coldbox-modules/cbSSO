@@ -60,6 +60,9 @@ jar {
 shadowJar {
 	archiveBaseName = "cbsso-opensaml"
     mergeServiceFiles()
+    dependencies {
+        exclude(dependency('org.apache.commons:commons-lang3'))
+    }
 	minimize{
         exclude( dependency( "org.opensaml:opensaml-core:.*" ) )
         exclude( dependency( "org.slf4j:.*:.*" ) )
