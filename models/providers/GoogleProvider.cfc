@@ -51,7 +51,7 @@ component
 			var res = oAuthService.makeAccessTokenRequest(
 				getClientId(),
 				getClientSecret(),
-				getRedirectUri(),
+				getRedirectUri( event ),
 				getAccessTokenEndpoint(),
 				event.getValue( "code" )
 			);

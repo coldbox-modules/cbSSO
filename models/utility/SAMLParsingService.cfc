@@ -81,7 +81,7 @@ component singleton {
 	private string function extractEmail( required xmlDoc ){
 		return xmlSearch(
 			xmlDoc,
-			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']"
+			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']"
 		)[ 1 ].xmlchildren[ 1 ].xmltext;
 	}
 
