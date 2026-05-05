@@ -79,10 +79,25 @@ component singleton {
 	}
 
 	private string function extractEmail( required xmlDoc ){
-		return xmlSearch(
+		// try emailAddress claim first, then fallback to name claim if emailAddress is not present
+		var emailNodes = xmlSearch(
+			xmlDoc,
+			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']"
+		);
+
+		if ( arrayLen( emailNodes ) > 0 ) {
+			return emailNodes[ 1 ].xmlchildren[ 1 ].xmltext;
+		}
+
+		var nameNodes = xmlSearch(
 			xmlDoc,
 			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']"
-		)[ 1 ].xmlchildren[ 1 ].xmltext;
+		);
+		if ( arrayLen( nameNodes ) > 0 ) {
+			return nameNodes[ 1 ].xmlchildren[ 1 ].xmltext;
+		}
+
+		return "";
 	}
 
 	private string function extractUserId( required xmlDoc ){

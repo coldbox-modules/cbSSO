@@ -107,40 +107,8 @@ component
 		return binaryEncode( output, "base64" );
 	}
 
-	private boolean function detectSuccess( required xmlDoc ){
-		return xmlSearch( xmlDoc, "//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']" ).len() == 1;
-	}
-
 	private boolean function extractErrorMessage( required xmlDoc ){
 		return xmlSearch( xmlDoc, "//samlp:StatusMessage" )[ 1 ].xmlchildren[ 1 ].xmltext;
-	}
-
-	private string function extractFirstName( required xmlDoc ){
-		return xmlSearch(
-			xmlDoc,
-			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']"
-		)[ 1 ].xmlchildren[ 1 ].xmltext;
-	}
-
-	private string function extractLastName( required xmlDoc ){
-		return xmlSearch(
-			xmlDoc,
-			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname']"
-		)[ 1 ].xmlchildren[ 1 ].xmltext;
-	}
-
-	private string function extractEmail( required xmlDoc ){
-		return xmlSearch(
-			xmlDoc,
-			"//Attribute[@Name='http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']"
-		)[ 1 ].xmlchildren[ 1 ].xmltext;
-	}
-
-	private string function extractUserId( required xmlDoc ){
-		return xmlSearch(
-			xmlDoc,
-			"//Attribute[@Name='http://schemas.microsoft.com/identity/claims/objectidentifier']"
-		)[ 1 ].xmlchildren[ 1 ].xmltext;
 	}
 
 	private void function initializeOpenSAMLLib(){
