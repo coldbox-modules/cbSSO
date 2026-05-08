@@ -9,8 +9,6 @@ component {
 			return variables.redirectURI;
 		}
 
-		var event = requestService.getContext();
-
 		return "#event.getHTMLBaseURL()#cbsso/auth/#variables.name.lcase()#";
 	}
 
