@@ -106,7 +106,6 @@ jobs:
           DEST_DIR: "ortussolutions/coldbox-modules/${{ env.MODULE_ID }}"
 
       - name: Publish To ForgeBox
-        if: env.SNAPSHOT == 'false'
         run: |
           cd .tmp/${{ env.MODULE_ID }}
           cat box.json
