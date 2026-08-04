@@ -1,39 +1,43 @@
 component {
-    property name = "ProviderService" inject = "ProviderService@cbsso";
-    property name="moduleSettings" inject="coldbox:moduleSettings:cbsso";
 
-    public any function start( event, rc, prc ){
-        var provider = ProviderService.get( event.getValue( "providerName", "" ) );
+	property name="ProviderService" inject="ProviderService@cbsso";
+	property name="moduleSettings"  inject="coldbox:moduleSettings:cbsso";
 
-        if( isNull( provider ) ){
-            announce( "CBSSOMissingProvider", {
-                "providerName": event.getValue( "providerName", "" )
-            } );
-            relocate( moduleSettings.errorRedirect );
-        }
+	/**
+	 * Resolves the requested provider into `prc.ssoProvider` for every action, or announces
+	 * `CBSSOMissingProvider` and redirects to the configured error page when the name is
+	 * not registered. `ProviderService.get()` throws on an unknown name, so the check has
+	 * to happen before it.
+	 */
+	function preHandler( event, rc, prc, action, eventArguments ){
+		var providerName = event.getValue( "providerName", "" );
 
-        relocate( url = provider.startAuthenticationWorflow( event ) );
-    }
+		if ( variables.ProviderService.missing( providerName ) ) {
+			announce( "CBSSOMissingProvider", { "providerName" : providerName } );
 
-    public any function authorize( event, rc, prc ){
-        var provider = ProviderService.get( event.getValue( "providerName", "" ) );
+			relocate( variables.moduleSettings.errorRedirect );
+			return;
+		}
 
-        if( isNull( provider ) ){
-            announce( "CBSSOMissingProvider", {
-                "providerName": event.getValue( "providerName", "" )
-            } );
+		prc.ssoProvider = variables.ProviderService.get( providerName );
+	}
 
-            relocate( moduleSettings.errorRedirect );
-        }
+	function start( event, rc, prc ){
+		relocate( url = prc.ssoProvider.startAuthenticationWorflow( event ) );
+	}
 
-        var ssoAuthorizationEvent = provider.processAuthorizationEvent( event );
+	function authorize( event, rc, prc ){
+		var ssoAuthorizationEvent = prc.ssoProvider.processAuthorizationEvent( event );
 
-        announce( "CBSSOAuthorization", {
-            "provider": provider,
-            "ssoAuthorizationEvent": ssoAuthorizationEvent
-        } );
-        
-        relocate( moduleSettings.successRedirect );
-    }
+		announce(
+			"CBSSOAuthorization",
+			{
+				"provider"              : prc.ssoProvider,
+				"ssoAuthorizationEvent" : ssoAuthorizationEvent
+			}
+		);
+
+		relocate( variables.moduleSettings.successRedirect );
+	}
 
 }

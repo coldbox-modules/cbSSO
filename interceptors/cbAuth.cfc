@@ -1,26 +1,34 @@
 component {
-    property name="moduleSettings" inject="coldbox:moduleSettings:cbsso";
-    
-    public void function CBSSOAuthorization( event, data ){
-        
-        var authService = getInstance( "authenticationService@cbauth" );
-        var userService = authService.getUserService();
 
-        if( !data.ssoAuthorizationEvent.wasSuccessful() ){
-            relocate( moduleSettings.errorRedirect );
-        }
+	property name="moduleSettings" inject="coldbox:moduleSettings:cbsso";
 
-        var user = userService.findBySSO( data.ssoAuthorizationEvent, data.provider );
+	/**
+	 * Logs the authenticated user in via cbAuth, creating or updating them from the SSO
+	 * response, then redirects to the configured success page.
+	 */
+	public void function CBSSOAuthorization( event, data ){
+		if ( !data.ssoAuthorizationEvent.wasSuccessful() ) {
+			relocate( variables.moduleSettings.errorRedirect );
+			return;
+		}
 
-        if( isNull( user ) ){
-            user = userService.createFromSSO( data.ssoAuthorizationEvent, data.provider );
-        }
-        else {
-            userService.updateFromSSO( user, data.ssoAuthorizationEvent, data.provider );
-        }
+		var authService = getInstance( "authenticationService@cbauth" );
+		var userService = authService.getUserService();
+		var user        = userService.findBySSO( data.ssoAuthorizationEvent, data.provider );
 
-        authService.login( user );
+		if ( isNull( user ) ) {
+			user = userService.createFromSSO( data.ssoAuthorizationEvent, data.provider );
+		} else {
+			userService.updateFromSSO(
+				user,
+				data.ssoAuthorizationEvent,
+				data.provider
+			);
+		}
 
-        relocate( moduleSettings.successRedirect );
-    }
+		authService.login( user );
+
+		relocate( variables.moduleSettings.successRedirect );
+	}
+
 }
