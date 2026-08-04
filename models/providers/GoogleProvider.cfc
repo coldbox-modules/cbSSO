@@ -69,6 +69,7 @@ component
 				.setLastName( idTokenData.family_name )
 				.setEmail( idTokenData.email )
 				.setUserId( idTokenData.sub )
+				.setClaims( idTokenData )
 		} catch ( any e ) {
 			return authResponse.setWasSuccessful( false ).setErrorMessage( e.message );
 		}

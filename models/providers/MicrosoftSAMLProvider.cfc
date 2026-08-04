@@ -73,12 +73,17 @@ component
 					.setErrorMessage( samlData.errorMessage );
 			}
 
+			// Set only here, not on the failure returns above: an assertion whose signature did not verify
+			// has asserted nothing, and a consumer reading a claim off it would be trusting the sender.
 			return authResponse
 				.setWasSuccessful( true )
 				.setFirstName( samlData.firstName )
 				.setLastName( samlData.lastName )
 				.setEmail( samlData.email )
 				.setUserId( samlData.userId )
+				.setClaims( samlData.claims )
+				.setNameId( samlData.nameId )
+				.setNameIdFormat( samlData.nameIdFormat )
 				.setRawResponseData( data );
 		} catch ( any e ) {
 			return authResponse.setWasSuccessful( false ).setErrorMessage( e.message );

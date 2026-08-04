@@ -9,5 +9,9 @@ interface {
 	public string function getLastName();
 	public any function getRawResponseData();
 	public string function getErrorMessage();
+	public struct function getClaims();
+	public string function getClaim( required string name, string defaultValue );
+	public string function getNameId();
+	public string function getNameIdFormat();
 
 }

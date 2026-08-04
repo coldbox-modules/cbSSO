@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `ISSOAuthorizationResponse.getClaims()` and `getClaim( name, defaultValue )` expose everything the IdP
+  asserted, keyed by the name the IdP used - the WS-Federation claim URIs for SAML, the id token or user
+  info keys for oAuth. The typed getters are a lowest common denominator of the four providers, so an
+  Entra group or role claim, a Google `hd`, or a customer's employee-number claim had nowhere to go and no
+  way to be read: a consumer had to re-parse `getRawResponseData()` itself. One map means the interface
+  does not grow a getter per claim, and it reads the same way for a SAML attribute as for an oAuth claim.
+- `ISSOAuthorizationResponse.getNameId()` and `getNameIdFormat()` expose the Subject's NameID, which no
+  attribute can substitute for and which the response could not reach at all. The Format comes with it
+  because it decides what the value means: Entra's default is a pairwise identifier scoped to one app
+  registration, so the same person arrives under a different NameID at a second registration in the same
+  tenant. Treat one as an identifier without reading the Format and you have keyed identity to a value
+  that is not portable.
+- `SAMLParsingService.extractUserInfo()` returns `claims`, `nameId` and `nameIdFormat` alongside the
+  existing fields. A claim always holds an array, since a SAML attribute may carry several
+  AttributeValues - Entra's `authnmethodsreferences` and its group claims do - and an IdP may split one
+  claim across repeated `Attribute` elements. Values are trimmed, which pretty-printed assertions need.
+- `MicrosoftSAMLProvider` sets the claims on the success path only. An assertion whose signature did not
+  verify has asserted nothing, so a consumer reading a claim off a failed response would be trusting
+  whoever sent it rather than the IdP.
+
 ### Changed
 
 - **BREAKING** `SSOAuthorizationResponse.getName()` returned `FirstName` instead of `Name`, so the value
@@ -20,6 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every action instead of each action resolving it for itself.
 
 ### Fixed
+
+- `SAMLParsingService` matched `//Attribute[@Name='...']`, which only resolves when the assertion carries
+  the SAML namespace as its default - `extractUserInfo()` strips default namespace declarations, and
+  nothing else. An IdP that prefixes its elements, as ADFS and Shibboleth do and Entra can be configured
+  to, therefore yielded no first name, surname or object identifier, and the whole response was reported
+  as `Failed to extract user information`. The typed fields are now derived from the claim set, which is
+  matched on `local-name()`.
 
 - [#16](https://github.com/coldbox-modules/cbSSO/issues/16) An unregistered provider name threw a
   `KeyNotFoundException` from `ProviderService.get()` before the handler's `isNull()` guard could run,

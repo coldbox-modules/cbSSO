@@ -44,6 +44,68 @@ component extends="coldbox.system.testing.BaseTestCase" {
 				expect( response.getName() ).toBe( "" );
 				expect( response.getFirstName() ).toBe( "" );
 				expect( response.getLastName() ).toBe( "" );
+				expect( response.getClaims() ).toBe( {} );
+				expect( response.getClaim( "urn:oid:0.9.2342.19200300.100.1.1" ) ).toBe( "" );
+				expect( response.getNameId() ).toBe( "" );
+				expect( response.getNameIdFormat() ).toBe( "" );
+			} );
+
+			it( "returns the caller's default for a claim the IdP did not assert", function(){
+				response.setClaims( { "email" : "jdoe@example.com" } );
+
+				expect( response.getClaim( "employeeNumber", "unknown" ) ).toBe( "unknown" );
+			} );
+
+			it( "holds every claim as an array, whatever the provider handed it", function(){
+				response.setClaims( {
+					"email"  : "jdoe@example.com",
+					"groups" : [ "Analysts", "Engineering" ]
+				} );
+
+				expect( response.getClaims() ).toBe( {
+					"email"  : [ "jdoe@example.com" ],
+					"groups" : [ "Analysts", "Engineering" ]
+				} );
+			} );
+
+			it( "returns the first value of a multi-valued claim", function(){
+				response.setClaims( { "groups" : [ "Analysts", "Engineering" ] } );
+
+				expect( response.getClaim( "groups" ) ).toBe( "Analysts" );
+				expect( response.getClaims()[ "groups" ] ).toHaveLength( 2 );
+			} );
+
+			it( "reads a claim back under any casing, since the IdP chooses the name", function(){
+				response.setClaims( { "employeeNumber" : "A1B2C3" } );
+
+				expect( response.getClaim( "EMPLOYEENUMBER" ) ).toBe( "A1B2C3" );
+			} );
+
+			it( "stringifies simple values, so a claim always reads as a string", function(){
+				response.setClaims( { "emailVerified" : true, "authTime" : 1767225600 } );
+
+				expect( response.getClaim( "emailVerified" ) ).toBe( "true" );
+				expect( response.getClaim( "authTime" ) ).toBe( "1767225600" );
+			} );
+
+			it( "leaves out a claim whose value is not simple - a nested object in an id token", function(){
+				response.setClaims( {
+					"email"   : "jdoe@example.com",
+					"address" : { "locality" : "Houston" }
+				} );
+
+				expect( response.getClaims() ).notToHaveKey( "address" );
+				expect( response.getClaim( "address" ) ).toBe( "" );
+				expect( response.getClaims() ).toHaveKey( "email" );
+			} );
+
+			it( "reads back the NameID and its format", function(){
+				response
+					.setNameId( "V3JpdHRlbkJ5T3J0dXNTb2x1dGlvbnM9" )
+					.setNameIdFormat( "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent" );
+
+				expect( response.getNameId() ).toBe( "V3JpdHRlbkJ5T3J0dXNTb2x1dGlvbnM9" );
+				expect( response.getNameIdFormat() ).toBe( "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent" );
 			} );
 
 			it( "reads back a Name set without any FirstName - as GitHubProvider does", function(){

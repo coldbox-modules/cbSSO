@@ -48,6 +48,62 @@ component extends="coldbox.system.testing.BaseTestCase" {
 				expect( result.email ).toBe( "jbeers@ortussolutions.com" );
 			} );
 
+			it( "returns every asserted attribute, not only the ones with a typed field", function(){
+				var rawSAMLResponse = fileRead( expandPath( "/tests/resources/validSAMLResponse.xml" ) );
+				var result          = service.extractUserInfo( rawSAMLResponse );
+
+				expect( result.claims ).toBeStruct();
+				expect( result.claims ).toHaveKey( "http://schemas.microsoft.com/identity/claims/tenantid" );
+				expect( result.claims[ "http://schemas.microsoft.com/identity/claims/displayname" ] ).toBe( [ "Jacob Beers" ] );
+			} );
+
+			it( "keeps every value of a multi-valued claim", function(){
+				var rawSAMLResponse = fileRead( expandPath( "/tests/resources/validSAMLResponse.xml" ) );
+				var result          = service.extractUserInfo( rawSAMLResponse );
+
+				// Entra sends three authentication methods here, each pretty-printed onto its own line
+				expect( result.claims[ "http://schemas.microsoft.com/claims/authnmethodsreferences" ] ).toBe( [
+					"http://schemas.microsoft.com/ws/2008/06/identity/authenticationmethod/password",
+					"http://schemas.microsoft.com/claims/multipleauthn",
+					"http://schemas.microsoft.com/ws/2008/06/identity/authenticationmethod/unspecified"
+				] );
+			} );
+
+			it( "extracts the subject NameID and its format", function(){
+				var rawSAMLResponse = fileRead( expandPath( "/tests/resources/validSAMLResponse.xml" ) );
+				var result          = service.extractUserInfo( rawSAMLResponse );
+
+				expect( result.nameId ).toBe( "pO+tkeMWqlmQJ6WmA1k2HOVlYfBGf0CnHApnDU9cGTk=" );
+				expect( result.nameIdFormat ).toBe( "urn:oasis:names:tc:SAML:2.0:nameid-format:transient" );
+			} );
+
+			it( "extracts from an assertion whose elements are namespace-prefixed", function(){
+				var rawSAMLResponse = fileRead( expandPath( "/tests/resources/prefixedSAMLResponse.xml" ) );
+				var result          = service.extractUserInfo( rawSAMLResponse );
+
+				expect( result.success ).toBeTrue();
+				expect( result.firstName ).toBe( "Ada" );
+				expect( result.lastName ).toBe( "Lovelace" );
+				expect( result.email ).toBe( "ada.lovelace@example.com" );
+				expect( result.userId ).toBe( "0c8f4a52-1b7d-4e39-9f6a-3d2c5b8e7a14" );
+				expect( result.nameId ).toBe( "V3JpdHRlbkJ5T3J0dXNTb2x1dGlvbnM9" );
+				expect( result.nameIdFormat ).toBe( "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent" );
+				expect( result.claims[ "http://schemas.microsoft.com/ws/2008/06/identity/claims/groups" ] ).toBe( [ "Analysts", "Engineering" ] );
+				expect( result.claims[ "https://example.com/claims/employeenumber" ] ).toBe( [ "A1B2C3" ] );
+			} );
+
+			it( "reports what was asserted even when a claim a typed field needs is missing", function(){
+				var rawSAMLResponse = fileRead( expandPath( "/tests/resources/prefixedSAMLResponse.xml" ) ).replace(
+					"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
+					"https://example.com/claims/notasurname"
+				);
+				var result = service.extractUserInfo( rawSAMLResponse );
+
+				expect( result.success ).toBeFalse();
+				expect( result.errorMessage ).toStartWith( "Failed to extract user information:" );
+				expect( result.claims ).toHaveKey( "https://example.com/claims/notasurname" );
+			} );
+
 			it( "should return an error message from the xml", function(){
 				var rawSAMLResponse = fileRead( expandPath( "/tests/resources/errorSAMLResponse.xml" ) );
 				var result          = service.extractUserInfo( rawSAMLResponse );
