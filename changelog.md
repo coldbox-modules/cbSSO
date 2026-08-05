@@ -40,6 +40,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   will now receive a full name.
 - `Auth` resolves the requested provider in a `preHandler`, which stores it in `prc.ssoProvider` for
   every action instead of each action resolving it for itself.
+- **BREAKING** `SAMLParsingService` treated a missing `givenname`, `surname` or `objectidentifier` claim as
+  a fatal error, failing the whole response. SAML 2.0 requires none of them: an `<AttributeStatement>` is
+  optional throughout Core, the Web Browser SSO profile (Profiles 4.1.4.2) asks only for a `<Subject>`
+  carrying a bearer `<SubjectConfirmation>`, and all three names are WS-Federation or Microsoft URIs that
+  only an Entra-shaped IdP asserts - so a conformant assertion from ADFS, Shibboleth or Okta was refused
+  over a display name, while the identifier the profile does point at went unread. The display names are
+  now optional, and the subject is identified by the `objectidentifier` claim where the IdP asserts one and
+  by the Subject's NameID where it does not. `firstName` and `lastName` may now be empty on a successful
+  response, where before they were either populated or the response failed.
+- A transient NameID is not accepted as a subject identifier, and an assertion carrying no other is
+  refused with `SAMLParsingService.NoSubjectIdentifier`. The specification defines a transient identifier
+  as valid for a single session, so keying identity to one enrols the same person again on every login.
+  Whether the identifier that *is* returned is portable remains the caller's to judge from `nameIdFormat`:
+  Entra's persistent NameID is pairwise, scoped to one app registration.
 
 ### Fixed
 

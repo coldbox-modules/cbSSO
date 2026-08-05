@@ -12,6 +12,11 @@ component singleton {
 		"objectIdentifier" : "http://schemas.microsoft.com/identity/claims/objectidentifier"
 	};
 
+	variables.nameIdFormats = {
+		"transient"    : "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
+		"emailAddress" : "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+	};
+
 	public struct function extractUserInfo( required string rawSAMLResponse ){
 		var data = {
 			"success"      : false,
@@ -38,16 +43,16 @@ component singleton {
 			try {
 				var subject = extractSubjectNameId( xmlData );
 
-				// Populated before the required claims are read, so a response that fails on a missing
-				// one still reports what the IdP actually asserted.
+				// Populated before the subject is resolved, so a response that fails to identify one
+				// still reports what the IdP actually asserted.
 				data.claims       = extractClaims( xmlData );
 				data.nameId       = subject.value;
 				data.nameIdFormat = subject.format;
 
-				data.firstName = requiredClaim( data.claims, variables.claimNames.givenName );
-				data.lastName  = requiredClaim( data.claims, variables.claimNames.surname );
-				data.email     = extractEmail( data.claims );
-				data.userId    = requiredClaim( data.claims, variables.claimNames.objectIdentifier );
+				data.firstName = claimValue( data.claims, variables.claimNames.givenName );
+				data.lastName  = claimValue( data.claims, variables.claimNames.surname );
+				data.email     = extractEmail( data.claims, subject );
+				data.userId    = extractUserId( data.claims, subject );
 
 				return data;
 			} catch ( any e ) {
@@ -147,32 +152,58 @@ component singleton {
 	}
 
 	/**
-	 * Falls back to the `name` claim, which carries the UPN when no email claim is mapped.
+	 * Falls back to the `name` claim, which carries the UPN when no email claim is mapped, and then to the
+	 * NameID when its Format says the value is an email address - the format an IdP that federates on email
+	 * rather than on attributes will use.
 	 */
-	private string function extractEmail( required struct claims ){
+	private string function extractEmail( required struct claims, required struct subject ){
 		var email = claimValue( claims, variables.claimNames.emailAddress );
 
-		return len( email ) ? email : claimValue( claims, variables.claimNames.name );
+		if ( !len( email ) ) {
+			email = claimValue( claims, variables.claimNames.name );
+		}
+
+		if ( !len( email ) && subject.format == variables.nameIdFormats.emailAddress ) {
+			email = subject.value;
+		}
+
+		return email;
+	}
+
+	/**
+	 * SAML 2.0 requires none of the attributes the typed fields are read from. An AttributeStatement is
+	 * optional throughout Core, and the Web Browser SSO profile (Profiles 4.1.4.2) asks only for a Subject
+	 * carrying a bearer SubjectConfirmation. The names read here are WS-Federation and Microsoft URIs that
+	 * only an Entra-shaped IdP asserts, so treating one as mandatory rejects a conformant assertion from
+	 * ADFS, Shibboleth or Okta over a display name.
+	 *
+	 * What a consumer cannot do without is something to identify the subject by, so that is the only thing
+	 * this refuses on. The object identifier is preferred because it is stable across app registrations,
+	 * and the NameID stands in when it is absent - unless it is transient, which the specification defines
+	 * as valid for a single session, so keying identity to it would enrol the same person again on every
+	 * login. Whether the value it does return is portable is the caller's to judge from `nameIdFormat`.
+	 */
+	private string function extractUserId( required struct claims, required struct subject ){
+		var objectIdentifier = claimValue( claims, variables.claimNames.objectIdentifier );
+
+		if ( len( objectIdentifier ) ) {
+			return objectIdentifier;
+		}
+
+		if ( len( subject.value ) && subject.format != variables.nameIdFormats.transient ) {
+			return subject.value;
+		}
+
+		var reason = len( subject.value ) ? "its NameID is transient" : "it carries no NameID";
+
+		throw(
+			type    = "SAMLParsingService.NoSubjectIdentifier",
+			message = "The assertion identifies no subject: it asserts no '#variables.claimNames.objectIdentifier#' claim, and #reason#."
+		);
 	}
 
 	private string function claimValue( required struct claims, required string name ){
 		return claims.keyExists( name ) && claims[ name ].len() ? claims[ name ][ 1 ] : "";
-	}
-
-	/**
-	 * Still throws when the claim is absent, so an assertion missing one of the values the typed fields
-	 * are built from fails exactly as it did before the claim set was exposed. Whether a missing
-	 * display-name claim should fail a login at all is a separate question from reaching the claims.
-	 */
-	private string function requiredClaim( required struct claims, required string name ){
-		if ( !claims.keyExists( name ) ) {
-			throw(
-				type    = "SAMLParsingService.MissingClaim",
-				message = "The assertion contains no '#name#' claim."
-			);
-		}
-
-		return claimValue( claims, name );
 	}
 
 }
