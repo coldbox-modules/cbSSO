@@ -1,7 +1,7 @@
 package cbsso.opensaml;
 
 import java.io.ByteArrayInputStream;
-import java.security.cert.X509Certificate;
+import java.nio.charset.StandardCharsets;
 
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -16,9 +16,6 @@ import org.opensaml.core.xml.io.Unmarshaller;
 import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.saml.saml2.core.Response;
-import org.opensaml.security.x509.BasicX509Credential;
-import org.opensaml.xmlsec.signature.support.SignatureException;
-import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -97,22 +94,34 @@ public class OpenSAMLUtils {
         return SerializeSupport.prettyPrintXML(element);
     }
 
-    public static Response parseResponse(String samlResponse) throws Exception {
+    public static DocumentBuilderFactory secureDocumentBuilderFactory() throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document document = builder.parse(new ByteArrayInputStream(samlResponse.getBytes()));
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
+        return factory;
+    }
+
+    public static Response parseResponse(String samlResponse) throws Exception {
+        DocumentBuilder builder = secureDocumentBuilderFactory().newDocumentBuilder();
+        Document document = builder.parse(new ByteArrayInputStream(samlResponse.getBytes(StandardCharsets.UTF_8)));
 
         Element element = document.getDocumentElement();
         UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
         Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
+        if (unmarshaller == null) {
+            throw new Exception("Document is not a saml2p:Response: no unmarshaller for "
+                    + element.getNamespaceURI() + ":" + element.getLocalName());
+        }
 
         XMLObject xmlObject = unmarshaller.unmarshall(element);
+        if (!(xmlObject instanceof Response)) {
+            throw new Exception("Document is not a saml2p:Response: got " + xmlObject.getElementQName());
+        }
         return (Response) xmlObject;
-    }
-
-    public static void verifySignature(Response response, X509Certificate certificate) throws SignatureException {
-        BasicX509Credential credential = new BasicX509Credential(certificate);
-        SignatureValidator.validate(response.getAssertions().get(0).getSignature(), credential);
     }
 }

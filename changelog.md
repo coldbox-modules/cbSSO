@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   registration, so the same person arrives under a different NameID at a second registration in the same
   tenant. Treat one as an identifier without reading the Format and you have keyed identity to a value
   that is not portable.
-- `SAMLParsingService.extractUserInfo()` returns `claims`, `nameId` and `nameIdFormat` alongside the
+- `SAMLParsingService.extractIdentity()` returns `claims`, `nameId` and `nameIdFormat` alongside the
   existing fields. A claim always holds an array, since a SAML attribute may carry several
   AttributeValues - Entra's `authnmethodsreferences` and its group claims do - and an IdP may split one
   claim across repeated `Attribute` elements. Values are trimmed, which pretty-printed assertions need.
@@ -49,6 +49,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now optional, and the subject is identified by the `objectidentifier` claim where the IdP asserts one and
   by the Subject's NameID where it does not. `firstName` and `lastName` may now be empty on a successful
   response, where before they were either populated or the response failed.
+- **BREAKING** `SAMLParsingService.extractUserInfo()` is replaced by two methods: `extractStatus(
+  rawSAMLResponse )`, which reads the Response's `samlp` Status and returns `success` and `errorMessage`,
+  and `extractIdentity( assertionXML )`, which reads identity out of the assertion it is handed and nothing
+  else. One method reading both out of the same unvalidated document is what allowed identity to be taken
+  from nodes the IdP never signed - see the security fix below. The status is still read from the raw
+  response, because when the IdP itself rejects a login there is no assertion to validate and the
+  StatusMessage the IdP wrote is the only account of why. `extractIdentity()` throws
+  `SAMLParsingService.NoSubjectIdentifier` instead of returning a `success` flag: there is no partial
+  identity worth handing back, and its caller is already inside a try/catch because validation throws.
+  A caller of `extractUserInfo()` now makes two calls, and must take the assertion from the validator
+  rather than the response it arrived in.
 - A transient NameID is not accepted as a subject identifier, and an assertion carrying no other is
   refused with `SAMLParsingService.NoSubjectIdentifier`. The specification defines a transient identifier
   as valid for a single session, so keying identity to one enrols the same person again on every login.
@@ -57,8 +68,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **SECURITY** `AuthResponseValidator.parseAndValidate()` performed its signature check inside
+  `for ( Assertion a : res.getAssertions() )`, so a response carrying **no** `Assertion` at all ran an empty
+  loop and was returned as valid. The only other check compared the Response's `Issuer` - a string in the
+  document the sender supplied - against the expected one. A self-authored, unsigned `samlp:Response` naming
+  the expected issuer, with a Success status and its claims in any element outside an Assertion, therefore
+  authenticated as whoever those claims named. The method is replaced by `parseAndValidateAssertion()`,
+  which requires a Success status, a matching issuer, no `EncryptedAssertion` elements, exactly one
+  `Assertion`, and a signature on that assertion, and returns the assertion it verified so no caller can
+  read identity from anything else.
+- **SECURITY** The expected issuer is now matched against the **Assertion's** `Issuer`, which Core 2.3.3
+  makes mandatory and which sits inside the signed element. The only issuer checked before was the
+  Response's - optional per the schema, outside the signature, and therefore whatever the sender chose to
+  write. The Response-level check is kept because it fails an obvious misconfiguration cheaply, but it is
+  not what the trust decision rests on any more.
+- **SECURITY** The assertion signature is now checked against `SAMLSignatureProfileValidator` before any
+  cryptographic verification, and the signature's single `Reference` URI must equal `##` plus the ID of the
+  assertion whose contents are used. Verifying a signature proves only that *something* in the document was
+  signed; without binding the reference to the element being read, XML Signature Wrapping lets an attacker
+  keep a genuine signed assertion and add a second, unsigned one for the code to read.
+- **SECURITY** `validateConditions()` was only reachable for a response that already had an assertion, and
+  dereferenced `getNotBefore()` and `getNotOnOrAfter()` without a null check, so an assertion omitting
+  either threw a `NullPointerException` and one omitting `Conditions` entirely threw before any window was
+  checked. `validateValidityWindow()` enforces every bound that is present, with 60s of clock skew, and
+  requires at least one upper bound - `Conditions/@NotOnOrAfter` or a bearer
+  `SubjectConfirmationData/@NotOnOrAfter`, which Profiles 4.1.4.2 makes mandatory anyway. The module has no
+  replay protection, so an assertion with no expiry would otherwise be replayable for good.
+- `verifySignature()` caught `Exception` per certificate, so a bug in the verification path - not just a
+  non-matching certificate - was indistinguishable from "try the next one", and the failure it finally threw
+  was a bare `SignatureException` with no message. Only `SignatureException` is now swallowed per
+  certificate, an empty certificate list is named as such rather than reported as a signature failure, and
+  the thrown message says how many certificates were tried.
+- `cacheCerts()` matched `IDPSSODescriptor` and `X509Certificate` with `getElementsByTagName()`, which is
+  namespace-blind and therefore missed both in metadata that prefixes them - as Entra's does - and read only
+  each certificate node's first child, truncating a value split across text nodes. Both are matched on
+  namespace wildcard and read with `getTextContent()`, a non-200 metadata response and a document yielding
+  no certificates are now errors instead of silently leaving the validator with none, and the certificate
+  list is replaced only once parsing has succeeded so a failed refresh cannot empty a working one. The
+  response-code `System.out.println` is gone.
+- Both SAML `DocumentBuilderFactory` instances now disallow DOCTYPE declarations, external entities and
+  XInclude. A SAML response is attacker-supplied XML parsed before anything about it has been verified,
+  which is exactly the XXE case.
+- `OpenSAMLUtils.parseResponse()` cast the unmarshalled object to `Response` without checking, so a document
+  that is not a `samlp:Response` failed with a `ClassCastException`, or a `NullPointerException` when no
+  unmarshaller existed for its root element. Both are named now.
+- `MicrosoftSAMLProvider` read the identity out of the whole SAML response before that response was
+  validated, matching `Attribute` and `NameID` nodes anywhere in the document. Only the Assertion is
+  signed, so a `samlp:Extensions` element - or anything else outside the Assertion - could supply the
+  email address, the object identifier or the NameID, and whoever posted the response chose who signed in.
+  The order is now: read the status, return the IdP's own message if the IdP rejected the login, validate,
+  and only then read the identity - out of the assertion `parseAndValidateAssertion()` returns, which is
+  the one element whose signature verified. Nothing outside it is read at all.
 - `SAMLParsingService` matched `//Attribute[@Name='...']`, which only resolves when the assertion carries
-  the SAML namespace as its default - `extractUserInfo()` strips default namespace declarations, and
+  the SAML namespace as its default - the parsing strips default namespace declarations, and
   nothing else. An IdP that prefixes its elements, as ADFS and Shibboleth do and Entra can be configured
   to, therefore yielded no first name, surname or object identifier, and the whole response was reported
   as `Failed to extract user information`. The typed fields are now derived from the claim set, which is

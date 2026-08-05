@@ -1,19 +1,34 @@
 <!--
-    A successful assertion whose elements all carry a namespace prefix, as ADFS and Shibboleth emit and
-    Entra can be configured to. The parsing strips only the default namespace declaration, so these
-    prefixes survive on the parsed document - which is why the extraction matches on local-name().
-
-    The Assertion redeclares xmlns:saml2 rather than inheriting it from the Response, so that the element
-    parses on its own: that is how the specs, and the validator, hand an assertion over by itself.
+    A response carrying a forged email claim, object identifier and Subject NameID in samlp:Extensions,
+    outside the Assertion. Only the Assertion is signed, so nothing out here was asserted by the IdP - a
+    document-wide search would nonetheless find these nodes, and whoever posted the response would be
+    choosing who signed in.
 -->
 <samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
-    xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" ID="_9c1f0b8e-6a2d-4f51-93cc-0b6a8e2f1d47"
+    xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" ID="_a1b2c3d4-1111-2222-3333-444455556666"
     Version="2.0" IssueInstant="2026-08-05T09:14:02.117Z"
     Destination="http://localhost:9181/cbsso/auth/entra">
     <saml2:Issuer>https://sts.windows.net/2b263285-61e2-49c4-a257-8234f38486a2/</saml2:Issuer>
     <samlp:Status>
         <samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success" />
     </samlp:Status>
+    <samlp:Extensions>
+        <saml2:Subject>
+            <saml2:NameID Format="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">
+                Zm9yZ2VkTmFtZUlkPT0=</saml2:NameID>
+        </saml2:Subject>
+        <saml2:AttributeStatement>
+            <saml2:Attribute Name="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress">
+                <saml2:AttributeValue>attacker@evil.example</saml2:AttributeValue>
+            </saml2:Attribute>
+            <saml2:Attribute Name="http://schemas.microsoft.com/identity/claims/objectidentifier">
+                <saml2:AttributeValue>ffffffff-ffff-ffff-ffff-ffffffffffff</saml2:AttributeValue>
+            </saml2:Attribute>
+            <saml2:Attribute Name="https://example.com/claims/forgedclaim">
+                <saml2:AttributeValue>never-asserted</saml2:AttributeValue>
+            </saml2:Attribute>
+        </saml2:AttributeStatement>
+    </samlp:Extensions>
     <saml2:Assertion xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion"
         ID="_5e7d2a1c-8f3b-4d6e-a0b9-2c4f7e1a9d38" Version="2.0"
         IssueInstant="2026-08-05T09:14:02.112Z">
@@ -30,21 +45,8 @@
             <saml2:Attribute Name="http://schemas.microsoft.com/identity/claims/objectidentifier">
                 <saml2:AttributeValue>0c8f4a52-1b7d-4e39-9f6a-3d2c5b8e7a14</saml2:AttributeValue>
             </saml2:Attribute>
-            <saml2:Attribute Name="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname">
-                <saml2:AttributeValue>Ada</saml2:AttributeValue>
-            </saml2:Attribute>
-            <saml2:Attribute Name="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname">
-                <saml2:AttributeValue>Lovelace</saml2:AttributeValue>
-            </saml2:Attribute>
             <saml2:Attribute Name="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress">
                 <saml2:AttributeValue>ada.lovelace@example.com</saml2:AttributeValue>
-            </saml2:Attribute>
-            <saml2:Attribute Name="http://schemas.microsoft.com/ws/2008/06/identity/claims/groups">
-                <saml2:AttributeValue>Analysts</saml2:AttributeValue>
-                <saml2:AttributeValue>Engineering</saml2:AttributeValue>
-            </saml2:Attribute>
-            <saml2:Attribute Name="https://example.com/claims/employeenumber">
-                <saml2:AttributeValue>A1B2C3</saml2:AttributeValue>
             </saml2:Attribute>
         </saml2:AttributeStatement>
     </saml2:Assertion>

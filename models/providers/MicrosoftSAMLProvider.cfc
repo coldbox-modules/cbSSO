@@ -46,44 +46,49 @@ component
 		initializeOpenSAMLLib();
 
 		try {
-			var decoded  = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
-			var data     = charsetEncode( decoded, "utf-8" );
-			var samlData = SAMLParsingService.extractUserInfo( data );
+			var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
+			var data    = charsetEncode( decoded, "utf-8" );
+			var status  = SAMLParsingService.extractStatus( data );
 
 			authResponse.setRawResponseData( data );
 
+			if ( !status.success ) {
+				return authResponse
+					.setWasSuccessful( false )
+					.setRawResponseData( data )
+					.setErrorMessage( status.errorMessage );
+			}
+
 			try {
-				variables.AuthNRequestGenerator.initOpenSAML();
-				variables.responseValidator.parseAndValidate(
+				var assertionXML = variables.responseValidator.parseAndValidateAssertion(
 					javacast( "string", data ),
 					variables.expectedIssuer
 				);
 			} catch ( any e ) {
+				// A validation failure is our verdict on the response, not the IdP's, so the exception is
+				// what explains it - the IdP's own account of a rejection was already returned above.
 				return authResponse
 					.setWasSuccessful( false )
 					.setRawResponseData( data )
-					.setErrorMessage( extractErrorMessage( xmlData ) )
+					.setErrorMessage( e.message );
 			}
 
-
-			if ( !samlData.success ) {
-				return authResponse
-					.setWasSuccessful( false )
-					.setRawResponseData( data )
-					.setErrorMessage( samlData.errorMessage );
-			}
+			// Read from the assertion the validator returned, never from `data`: that assertion is the one
+			// element whose signature verified, so nothing else in the response can supply a claim or a
+			// NameID and have it treated as identity.
+			var identity = SAMLParsingService.extractIdentity( assertionXML );
 
 			// Set only here, not on the failure returns above: an assertion whose signature did not verify
 			// has asserted nothing, and a consumer reading a claim off it would be trusting the sender.
 			return authResponse
 				.setWasSuccessful( true )
-				.setFirstName( samlData.firstName )
-				.setLastName( samlData.lastName )
-				.setEmail( samlData.email )
-				.setUserId( samlData.userId )
-				.setClaims( samlData.claims )
-				.setNameId( samlData.nameId )
-				.setNameIdFormat( samlData.nameIdFormat )
+				.setFirstName( identity.firstName )
+				.setLastName( identity.lastName )
+				.setEmail( identity.email )
+				.setUserId( identity.userId )
+				.setClaims( identity.claims )
+				.setNameId( identity.nameId )
+				.setNameIdFormat( identity.nameIdFormat )
 				.setRawResponseData( data );
 		} catch ( any e ) {
 			return authResponse.setWasSuccessful( false ).setErrorMessage( e.message );
@@ -110,10 +115,6 @@ component
 
 		output = javacast( "byte[]", arraySlice( output, 1, compressedDataLength ) );
 		return binaryEncode( output, "base64" );
-	}
-
-	private boolean function extractErrorMessage( required xmlDoc ){
-		return xmlSearch( xmlDoc, "//samlp:StatusMessage" )[ 1 ].xmlchildren[ 1 ].xmltext;
 	}
 
 	private void function initializeOpenSAMLLib(){

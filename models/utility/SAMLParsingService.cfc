@@ -17,65 +17,66 @@ component singleton {
 		"emailAddress" : "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
 	};
 
-	public struct function extractUserInfo( required string rawSAMLResponse ){
-		var data = {
-			"success"      : false,
-			"errorMessage" : "",
-			"error"        : "",
-			"firstName"    : "",
-			"lastName"     : "",
-			"email"        : "",
-			"userId"       : "",
-			"nameId"       : "",
-			"nameIdFormat" : "",
-			"claims"       : {}
-		};
-		var xmlData = xmlParse( rawSAMLResponse.reReplace( "xmlns="".+?""", "", "all" ) );
-
+	/**
+	 * Read from the unvalidated Response on purpose: when the IdP itself rejected the login there is no
+	 * assertion to validate, and the StatusMessage the IdP wrote is the only account of why. Nothing here
+	 * is identity - a status says whether to carry on, never who signed in.
+	 */
+	public struct function extractStatus( required string rawSAMLResponse ){
 		try {
-			data.success = detectSuccess( xmlData );
+			var xmlData = parseSAML( arguments.rawSAMLResponse );
 
-			if ( !data.success ) {
-				data.errorMessage = extractErrorMessage( xmlData );
-				return data;
+			if ( detectSuccess( xmlData ) ) {
+				return { "success" : true, "errorMessage" : "" };
 			}
 
-			try {
-				var subject = extractSubjectNameId( xmlData );
-
-				// Populated before the subject is resolved, so a response that fails to identify one
-				// still reports what the IdP actually asserted.
-				data.claims       = extractClaims( xmlData );
-				data.nameId       = subject.value;
-				data.nameIdFormat = subject.format;
-
-				data.firstName = claimValue( data.claims, variables.claimNames.givenName );
-				data.lastName  = claimValue( data.claims, variables.claimNames.surname );
-				data.email     = extractEmail( data.claims, subject );
-				data.userId    = extractUserId( data.claims, subject );
-
-				return data;
-			} catch ( any e ) {
-				data.success      = false;
-				data.errorMessage = "Failed to extract user information: " & e.message;
-				data.error        = e;
-				return data;
-			}
+			return {
+				"success"      : false,
+				"errorMessage" : extractErrorMessage( xmlData )
+			};
 		} catch ( any e ) {
-			data.success      = false;
-			data.errorMessage = "Failed to extract user information: " & e.message;
-			data.error        = e;
+			return {
+				"success"      : false,
+				"errorMessage" : "Invalid SAML Response - could not be read: #e.message#"
+			};
 		}
-
-		return data;
 	}
 
 	/**
-	 * Matched on local-name() rather than the `samlp:` prefix. extractUserInfo() strips only the default
-	 * namespace declaration, so `xmlns:samlp` survives on the document - but BoxLang's xmlSearch does not
-	 * resolve a prefixed XPath against a prefix declared in the document, so `//samlp:StatusCode` finds
-	 * nothing there and a valid, signed, successful assertion is reported as a failure. local-name() is
-	 * the form that behaves the same on every engine.
+	 * Takes the assertion whose signature verified, not the Response that carried it, and reads nothing it
+	 * was not handed. Given a whole Response this would match attribute and NameID nodes anywhere in the
+	 * document, including unsigned ones a sender can add at will - so identity would no longer be bound to
+	 * what the IdP signed.
+	 *
+	 * Throws rather than reporting a flag: there is no partial identity worth returning, and every caller
+	 * is already inside a try/catch because validation throws.
+	 */
+	public struct function extractIdentity( required string assertionXML ){
+		var xmlData = parseSAML( arguments.assertionXML );
+		var claims  = extractClaims( xmlData );
+		var subject = extractSubjectNameId( xmlData );
+
+		return {
+			"firstName"    : claimValue( claims, variables.claimNames.givenName ),
+			"lastName"     : claimValue( claims, variables.claimNames.surname ),
+			"email"        : extractEmail( claims, subject ),
+			"userId"       : extractUserId( claims, subject ),
+			"nameId"       : subject.value,
+			"nameIdFormat" : subject.format,
+			"claims"       : claims
+		};
+	}
+
+	private any function parseSAML( required string samlXML ){
+		return xmlParse( arguments.samlXML.reReplace( "xmlns="".+?""", "", "all" ) );
+	}
+
+	/**
+	 * Matched on local-name() rather than the `samlp:` prefix. parseSAML() strips only the default namespace
+	 * declaration, so `xmlns:samlp` survives on the document - but BoxLang's xmlSearch does not resolve a
+	 * prefixed XPath against a prefix declared in the document, so `//samlp:StatusCode` finds nothing there
+	 * and a valid, signed, successful assertion is reported as a failure. local-name() is the form that
+	 * behaves the same on every engine.
 	 */
 	private boolean function detectSuccess( required xmlDoc ){
 		return xmlSearch(
