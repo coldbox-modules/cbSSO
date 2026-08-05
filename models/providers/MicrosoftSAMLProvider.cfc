@@ -17,8 +17,9 @@ component
 	property name="responseValidator";
 	property name="SAMLParsingService" inject="SAMLParsingService@cbsso";
 
-	variables.name                  = "Entra";
-	variables.federationMetadataURL = "";
+	variables.name                    = "Entra";
+	variables.federationMetadataURL   = "";
+	variables.maxDecodedResponseChars = 1048576;
 
 	public string function getName(){
 		return variables.name;
@@ -48,7 +49,17 @@ component
 		try {
 			var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
 			var data    = charsetEncode( decoded, "utf-8" );
-			var status  = SAMLParsingService.extractStatus( data );
+
+			// extractStatus below parses attacker-supplied XML before the hardened Java validator sees it,
+			// so an unbounded document is a cheap denial of service.
+			if ( len( data ) > variables.maxDecodedResponseChars ) {
+				throw(
+					type    = "MicrosoftSAMLProvider.ResponseTooLarge",
+					message = "SAMLResponse decoded to #len( data )# characters, exceeding the #variables.maxDecodedResponseChars# character limit"
+				);
+			}
+
+			var status = SAMLParsingService.extractStatus( data );
 
 			authResponse.setRawResponseData( data );
 
@@ -60,9 +71,13 @@ component
 			}
 
 			try {
+				// clientId is the SP Entity ID the AuthnRequest was issued under, so it is the Audience the
+				// IdP must have named; getRedirectUri() is the ACS URL, so it is the expected Recipient.
 				var assertionXML = variables.responseValidator.parseAndValidateAssertion(
 					javacast( "string", data ),
-					variables.expectedIssuer
+					javacast( "string", variables.expectedIssuer ),
+					javacast( "string", variables.clientId ),
+					javacast( "string", getRedirectUri( event ) )
 				);
 			} catch ( any e ) {
 				// A validation failure is our verdict on the response, not the IdP's, so the exception is

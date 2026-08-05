@@ -16,6 +16,9 @@ import javax.xml.parsers.DocumentBuilder;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AttributeStatement;
+import org.opensaml.saml.saml2.core.Audience;
+import org.opensaml.saml.saml2.core.AudienceRestriction;
+import org.opensaml.saml.saml2.core.AuthnStatement;
 import org.opensaml.saml.saml2.core.Conditions;
 import org.opensaml.saml.saml2.core.Issuer;
 import org.opensaml.saml.saml2.core.Response;
@@ -40,13 +43,21 @@ public class AuthResponseValidator {
 
     private static final Duration CLOCK_SKEW = Duration.ofSeconds(60);
 
+    // Certificate loading is lazy, so this fetch happens on a user's first sign-in and an
+    // unresponsive IdP would otherwise hold that request thread open indefinitely.
+    private static final Duration METADATA_CONNECT_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration METADATA_REQUEST_TIMEOUT = Duration.ofSeconds(10);
+
     private List<X509Certificate> certs = new ArrayList<X509Certificate>();
 
     public void cacheCerts(String federationMetaDataURL) throws Exception {
 
-        HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(METADATA_CONNECT_TIMEOUT)
+                .build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(federationMetaDataURL))
+                .timeout(METADATA_REQUEST_TIMEOUT)
                 .GET()
                 .build();
 
@@ -94,7 +105,15 @@ public class AuthResponseValidator {
      * @return the validated Assertion serialized as XML — the exact element whose signature verified.
      * @throws Exception on ANY validation failure.
      */
-    public String parseAndValidateAssertion(String rawSAMLXML, String expectedIssuer) throws Exception {
+    public String parseAndValidateAssertion(String rawSAMLXML, String expectedIssuer, String expectedAudience,
+            String expectedRecipient) throws Exception {
+
+        // Named before anything is parsed. An unset audience or recipient would otherwise reject every
+        // assertion with "no Audience matches this service provider """, which reads as the IdP's fault
+        // rather than as this provider being misconfigured.
+        requireConfigured("expectedIssuer", expectedIssuer);
+        requireConfigured("expectedAudience", expectedAudience);
+        requireConfigured("expectedRecipient", expectedRecipient);
 
         Response res = OpenSAMLUtils.parseResponse(rawSAMLXML);
 
@@ -140,6 +159,12 @@ public class AuthResponseValidator {
         validateAssertionIssuer(assertion, expectedIssuer);
 
         validateValidityWindow(assertion);
+
+        validateAudience(assertion, expectedAudience);
+
+        validateRecipient(assertion, expectedRecipient);
+
+        validateAuthnStatement(assertion);
 
         Element dom = assertion.getDOM();
         if (dom == null) {
@@ -265,6 +290,68 @@ public class AuthResponseValidator {
         if (!hasUpperBound) {
             throw new Exception("Assertion carries no expiry: neither Conditions NotOnOrAfter nor a bearer "
                     + "SubjectConfirmationData NotOnOrAfter is present");
+        }
+    }
+
+    // Without this, an assertion the IdP minted for a different relying party verifies here and signs the
+    // holder in. Profiles 4.1.4.2 requires an AudienceRestriction naming the SP, so - as with the expiry
+    // above - absence is a rejection, not a pass.
+    private void requireConfigured(String name, String value) throws Exception {
+
+        if (value == null || value.trim().isEmpty()) {
+            throw new Exception("Cannot validate an assertion: " + name + " is not configured on this provider");
+        }
+    }
+
+    private void validateAudience(Assertion assertion, String expectedAudience) throws Exception {
+
+        Conditions conditions = assertion.getConditions();
+        List<AudienceRestriction> restrictions = conditions == null
+                ? new ArrayList<AudienceRestriction>()
+                : conditions.getAudienceRestrictions();
+
+        if (restrictions.isEmpty()) {
+            throw new Exception("Assertion carries no Conditions/AudienceRestriction, so it is not bound to "
+                    + "this service provider \"" + expectedAudience + "\"");
+        }
+
+        for (AudienceRestriction restriction : restrictions) {
+            for (Audience audience : restriction.getAudiences()) {
+                if (expectedAudience.equals(audience.getURI())) {
+                    return;
+                }
+            }
+        }
+
+        throw new Exception("No Audience in the assertion's AudienceRestriction matches this service provider \""
+                + expectedAudience + "\"");
+    }
+
+    // The Recipient binds the assertion to this exact ACS endpoint, so one captured at another SP's endpoint
+    // cannot be replayed here.
+    private void validateRecipient(Assertion assertion, String expectedRecipient) throws Exception {
+
+        if (assertion.getSubject() != null) {
+            for (SubjectConfirmation confirmation : assertion.getSubject().getSubjectConfirmations()) {
+                if (!SubjectConfirmation.METHOD_BEARER.equals(confirmation.getMethod())) {
+                    continue;
+                }
+
+                SubjectConfirmationData data = confirmation.getSubjectConfirmationData();
+                if (data != null && expectedRecipient.equals(data.getRecipient())) {
+                    return;
+                }
+            }
+        }
+
+        throw new Exception("No bearer SubjectConfirmationData has Recipient \"" + expectedRecipient + "\"");
+    }
+
+    private void validateAuthnStatement(Assertion assertion) throws Exception {
+
+        if (assertion.getAuthnStatements().isEmpty()) {
+            throw new Exception("Assertion contains no AuthnStatement, so it does not attest that the subject "
+                    + "authenticated");
         }
     }
 

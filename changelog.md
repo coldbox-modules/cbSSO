@@ -33,6 +33,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `AuthNRequestGenerator` requests a persistent NameID rather than a transient one. The two halves
+  contradicted each other: the request asked for `transient`, and `SAMLParsingService.extractUserId()`
+  refuses a transient NameID when no `objectidentifier` claim is present, since the specification defines a
+  transient identifier as valid for a single session. An IdP that returns exactly what was asked for and
+  does not assert Microsoft's `objectidentifier` - which is precisely the ADFS or Shibboleth deployment the
+  relaxed claim handling was meant to support - was therefore refused. Entra masks it by always asserting
+  `objectidentifier`.
+- `MicrosoftSAMLProvider` refuses a `SAMLResponse` that decodes to more than 1MB with
+  `MicrosoftSAMLProvider.ResponseTooLarge`, before it is parsed. `extractStatus()` is the one place
+  attacker-supplied XML reaches a CFML parser rather than the hardened Java one, and `xmlParse` accepts no
+  size or depth limit.
 - **BREAKING** `SSOAuthorizationResponse.getName()` returned `FirstName` instead of `Name`, so the value
   written by `setName()` could never be read back - `GitHubProvider` sets only `Name`, making its display
   name unreachable. It now returns `Name`, falling back to `FirstName LastName` for providers that set
@@ -77,6 +88,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which requires a Success status, a matching issuer, no `EncryptedAssertion` elements, exactly one
   `Assertion`, and a signature on that assertion, and returns the assertion it verified so no caller can
   read identity from anything else.
+- **SECURITY** The assertion is now bound to this service provider, not merely to the IdP.
+  `parseAndValidateAssertion()` takes the expected audience and recipient, and requires a
+  `Conditions/AudienceRestriction` naming that audience, a bearer `SubjectConfirmationData/@Recipient` equal
+  to the ACS endpoint, and at least one `AuthnStatement`. Without those, an assertion the same IdP issued
+  for a different service provider - a second app registration in the same Entra tenant, say - verified
+  cleanly here, because it carries the same signature key. Profiles 4.1.4.2 requires all three of Web
+  Browser SSO. An unset audience or recipient is named as a provider misconfiguration rather than reported
+  as the assertion failing validation.
+- **SECURITY** Both `DocumentBuilderFactory` instances set `maxElementDepth` to 25 and
+  `elementAttributeLimit` to 30, the defaults OpenSAML itself adopted in 5.2.2 following its 13 May 2026
+  advisory on unauthenticated memory and CPU exhaustion from maliciously crafted XML. Upgrading the library
+  would not have covered this path: those defaults govern OpenSAML's own decoders and `ParserPool`, while
+  `parseResponse()` builds its own factory. Disabling DOCTYPE already ruled out entity expansion, but
+  nesting depth needs no DTD at all. Secure processing is enabled alongside them.
+- `cacheCerts()` sets a 10 second connect timeout and a 10 second request timeout. The metadata fetch is
+  lazy, so it happens on a user's first sign-in - an unresponsive IdP previously occupied that request
+  thread indefinitely.
 - **SECURITY** The expected issuer is now matched against the **Assertion's** `Issuer`, which Core 2.3.3
   makes mandatory and which sits inside the signed element. The only issuer checked before was the
   Response's - optional per the schema, outside the signature, and therefore whatever the sender chose to

@@ -26,6 +26,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.saml.saml2.core.Audience;
+import org.opensaml.saml.saml2.core.AudienceRestriction;
+import org.opensaml.saml.saml2.core.AuthnContext;
+import org.opensaml.saml.saml2.core.AuthnContextClassRef;
+import org.opensaml.saml.saml2.core.AuthnStatement;
 import org.opensaml.saml.saml2.core.Conditions;
 import org.opensaml.saml.saml2.core.Issuer;
 import org.opensaml.saml.saml2.core.Response;
@@ -47,6 +52,8 @@ import net.shibboleth.utilities.java.support.xml.SerializeSupport;
 class AuthResponseValidatorTest {
 
     private static final String IDP_ISSUER = "https://idp.example.org/test";
+    private static final String SP_AUDIENCE = "https://sp.example.com/entity-id";
+    private static final String ACS_RECIPIENT = "https://sp.example.com/cbsso/auth/entra";
 
     private static KeyPair keyPair;
     private static X509Certificate certificate;
@@ -91,7 +98,7 @@ class AuthResponseValidatorTest {
         String xml = serialize(buildResponse(IDP_ISSUER, StatusCode.SUCCESS));
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("exactly one Assertion"), e.getMessage());
     }
 
@@ -105,7 +112,7 @@ class AuthResponseValidatorTest {
         String xml = signAndSerialize(response, first.getSignature());
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("exactly one Assertion"), e.getMessage());
     }
 
@@ -124,7 +131,7 @@ class AuthResponseValidatorTest {
         assertTrue(!tampered.equals(xml), "tampering must have changed the document");
 
         assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(tampered, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(tampered, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
     }
 
     @Test
@@ -136,7 +143,7 @@ class AuthResponseValidatorTest {
         response.getAssertions().add(assertion);
         String xml = signAndSerialize(response, assertion.getSignature());
 
-        String returned = validator.parseAndValidateAssertion(xml, IDP_ISSUER);
+        String returned = validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT);
 
         Element root = parse(returned).getDocumentElement();
         assertEquals("Assertion", root.getLocalName());
@@ -151,7 +158,7 @@ class AuthResponseValidatorTest {
         String xml = serialize(response);
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("not signed"), e.getMessage());
     }
 
@@ -164,7 +171,7 @@ class AuthResponseValidatorTest {
         String xml = signAndSerialize(response, signature);
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("not signed"), e.getMessage());
     }
 
@@ -177,7 +184,8 @@ class AuthResponseValidatorTest {
         String xml = signAndSerialize(response, assertion.getSignature());
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, "https://someone-else.example.org"));
+                () -> validator.parseAndValidateAssertion(xml, "https://someone-else.example.org",
+                        SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("issuer"), e.getMessage());
     }
 
@@ -193,7 +201,7 @@ class AuthResponseValidatorTest {
         String xml = signAndSerialize(response, assertion.getSignature());
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("Assertion issuer"), e.getMessage());
     }
 
@@ -207,7 +215,7 @@ class AuthResponseValidatorTest {
         String xml = signAndSerialize(response, assertion.getSignature());
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("Assertion issuer"), e.getMessage());
     }
 
@@ -220,7 +228,7 @@ class AuthResponseValidatorTest {
         String xml = signAndSerialize(response, assertion.getSignature());
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("status"), e.getMessage());
     }
 
@@ -236,7 +244,7 @@ class AuthResponseValidatorTest {
         String xml = signAndSerialize(response, assertion.getSignature());
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("expired"), e.getMessage());
     }
 
@@ -250,7 +258,7 @@ class AuthResponseValidatorTest {
         String xml = signAndSerialize(response, assertion.getSignature());
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("no expiry"), e.getMessage());
     }
 
@@ -258,13 +266,15 @@ class AuthResponseValidatorTest {
     void acceptsAssertionWithOnlyBearerSubjectConfirmationExpiry() throws Exception {
         Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
         Assertion assertion = buildAssertion();
-        assertion.setConditions(null);
+        // Conditions still carry the AudienceRestriction, but no NotOnOrAfter of their own, so the bearer
+        // SubjectConfirmationData is the only source of the upper bound.
+        assertion.setConditions(buildConditions(SP_AUDIENCE));
         assertion.setSubject(buildBearerSubject(Instant.now().plus(Duration.ofMinutes(5))));
         attachSignature(assertion);
         response.getAssertions().add(assertion);
         String xml = signAndSerialize(response, assertion.getSignature());
 
-        String returned = validator.parseAndValidateAssertion(xml, IDP_ISSUER);
+        String returned = validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT);
         assertEquals("Assertion", parse(returned).getDocumentElement().getLocalName());
     }
 
@@ -278,8 +288,150 @@ class AuthResponseValidatorTest {
         String xml = signAndSerialize(response, assertion.getSignature());
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("SubjectConfirmationData NotOnOrAfter"), e.getMessage());
+    }
+
+    @Test
+    void rejectsAssertionWithNoAudienceRestriction() throws Exception {
+        Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
+        Assertion assertion = buildAssertion();
+        Conditions conditions = buildConditions(null);
+        conditions.setNotOnOrAfter(Instant.now().plus(Duration.ofMinutes(5)));
+        assertion.setConditions(conditions);
+        attachSignature(assertion);
+        response.getAssertions().add(assertion);
+        String xml = signAndSerialize(response, assertion.getSignature());
+
+        Exception e = assertThrows(Exception.class,
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
+        assertTrue(e.getMessage().contains("no Conditions/AudienceRestriction"), e.getMessage());
+    }
+
+    @Test
+    void rejectsAssertionIssuedToAnotherServiceProvider() throws Exception {
+        Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
+        Assertion assertion = buildAssertion();
+        Conditions conditions = buildConditions("https://another-sp.example.net/entity-id");
+        conditions.setNotOnOrAfter(Instant.now().plus(Duration.ofMinutes(5)));
+        assertion.setConditions(conditions);
+        attachSignature(assertion);
+        response.getAssertions().add(assertion);
+        String xml = signAndSerialize(response, assertion.getSignature());
+
+        Exception e = assertThrows(Exception.class,
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
+        assertTrue(e.getMessage().contains("No Audience"), e.getMessage());
+    }
+
+    @Test
+    void acceptsAssertionWhoseAudienceRestrictionNamesThisServiceProviderAmongOthers() throws Exception {
+        Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
+        Assertion assertion = buildAssertion();
+        Audience other = OpenSAMLUtils.buildSAMLObject(Audience.class);
+        other.setURI("https://another-sp.example.net/entity-id");
+        assertion.getConditions().getAudienceRestrictions().get(0).getAudiences().add(0, other);
+        attachSignature(assertion);
+        response.getAssertions().add(assertion);
+        String xml = signAndSerialize(response, assertion.getSignature());
+
+        String returned = validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT);
+        assertEquals("Assertion", parse(returned).getDocumentElement().getLocalName());
+    }
+
+    @Test
+    void rejectsAssertionWhoseRecipientIsAnotherAssertionConsumerService() throws Exception {
+        Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
+        Assertion assertion = buildAssertion();
+        assertion.setSubject(buildBearerSubject("https://another-sp.example.net/acs", null));
+        attachSignature(assertion);
+        response.getAssertions().add(assertion);
+        String xml = signAndSerialize(response, assertion.getSignature());
+
+        Exception e = assertThrows(Exception.class,
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
+        assertTrue(e.getMessage().contains("Recipient"), e.getMessage());
+    }
+
+    @Test
+    void rejectsAssertionWithNoBearerRecipient() throws Exception {
+        Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
+        Assertion assertion = buildAssertion();
+        assertion.setSubject(buildBearerSubject(null, null));
+        attachSignature(assertion);
+        response.getAssertions().add(assertion);
+        String xml = signAndSerialize(response, assertion.getSignature());
+
+        Exception e = assertThrows(Exception.class,
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
+        assertTrue(e.getMessage().contains("Recipient"), e.getMessage());
+    }
+
+    @Test
+    void rejectsAssertionWithNoAuthnStatement() throws Exception {
+        Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
+        Assertion assertion = buildAssertion();
+        assertion.getAuthnStatements().clear();
+        attachSignature(assertion);
+        response.getAssertions().add(assertion);
+        String xml = signAndSerialize(response, assertion.getSignature());
+
+        Exception e = assertThrows(Exception.class,
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
+        assertTrue(e.getMessage().contains("no AuthnStatement"), e.getMessage());
+    }
+
+    @Test
+    void acceptsAssertionBoundToThisServiceProviderWithAnAuthnStatement() throws Exception {
+        Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
+        Assertion assertion = buildAssertion();
+        assertion.setSubject(buildBearerSubject(ACS_RECIPIENT, Instant.now().plus(Duration.ofMinutes(5))));
+        attachSignature(assertion);
+        response.getAssertions().add(assertion);
+        String xml = signAndSerialize(response, assertion.getSignature());
+
+        String returned = validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT);
+
+        Element root = parse(returned).getDocumentElement();
+        assertEquals("Assertion", root.getLocalName());
+        assertEquals(SP_AUDIENCE, root.getElementsByTagNameNS(
+                "urn:oasis:names:tc:SAML:2.0:assertion", "Audience").item(0).getTextContent());
+        assertEquals(1, root.getElementsByTagNameNS(
+                "urn:oasis:names:tc:SAML:2.0:assertion", "AuthnStatement").getLength());
+    }
+
+    @Test
+    void rejectsExcessivelyNestedDocument() {
+        // No DTD, so disallow-doctype-decl does not help here: this is the nesting-depth case from
+        // OpenSAML's 13 May 2026 advisory, and the parser has to refuse it.
+        StringBuilder nested = new StringBuilder(
+                "<samlp:Response xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">");
+        for (int i = 0; i < 200; i++) {
+            nested.append("<a>");
+        }
+        for (int i = 0; i < 200; i++) {
+            nested.append("</a>");
+        }
+        nested.append("</samlp:Response>");
+
+        // Asserting on the parser's own complaint, not merely that it threw: without the depth limit this
+        // document is rejected later for having no Status, so a bare assertThrows would pass either way.
+        Exception e = assertThrows(Exception.class, () -> validator.parseAndValidateAssertion(
+                nested.toString(), IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
+        assertTrue(e.getMessage() != null && e.getMessage().contains("maxElementDepth"), e.getMessage());
+    }
+
+    @Test
+    void namesAnUnconfiguredAudienceRatherThanBlamingTheAssertion() throws Exception {
+        Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
+        Assertion assertion = buildAssertion();
+        attachSignature(assertion);
+        response.getAssertions().add(assertion);
+        String xml = signAndSerialize(response, assertion.getSignature());
+
+        Exception e = assertThrows(Exception.class,
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, "   ", ACS_RECIPIENT));
+        assertTrue(e.getMessage().contains("expectedAudience is not configured"), e.getMessage());
     }
 
     @Test
@@ -298,7 +450,7 @@ class AuthResponseValidatorTest {
         String xml = signAndSerialize(response, signature);
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("did not verify"), e.getMessage());
     }
 
@@ -340,7 +492,7 @@ class AuthResponseValidatorTest {
         String xml = SerializeSupport.nodeToString(bare.getDOM());
 
         Exception e = assertThrows(Exception.class,
-                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER));
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage().contains("not a saml2p:Response"), e.getMessage());
     }
 
@@ -370,25 +522,63 @@ class AuthResponseValidatorTest {
         return response;
     }
 
+    // A fully valid assertion for the expected issuer, audience and recipient. The bearer
+    // SubjectConfirmationData deliberately carries no NotOnOrAfter so that the expiry tests can control
+    // where the upper bound comes from.
     private static Assertion buildAssertion() {
         Assertion assertion = OpenSAMLUtils.buildSAMLObject(Assertion.class);
         assertion.setID("_" + UUID.randomUUID());
         assertion.setIssueInstant(Instant.now());
         assertion.setIssuer(buildIssuer(IDP_ISSUER));
 
-        Conditions conditions = OpenSAMLUtils.buildSAMLObject(Conditions.class);
+        Conditions conditions = buildConditions(SP_AUDIENCE);
         conditions.setNotBefore(Instant.now().minus(Duration.ofMinutes(5)));
         conditions.setNotOnOrAfter(Instant.now().plus(Duration.ofMinutes(5)));
         assertion.setConditions(conditions);
 
+        assertion.setSubject(buildBearerSubject(ACS_RECIPIENT, null));
+        assertion.getAuthnStatements().add(buildAuthnStatement());
+
         return assertion;
     }
 
+    private static Conditions buildConditions(String audienceValue) {
+        Conditions conditions = OpenSAMLUtils.buildSAMLObject(Conditions.class);
+
+        if (audienceValue != null) {
+            AudienceRestriction restriction = OpenSAMLUtils.buildSAMLObject(AudienceRestriction.class);
+            Audience audience = OpenSAMLUtils.buildSAMLObject(Audience.class);
+            audience.setURI(audienceValue);
+            restriction.getAudiences().add(audience);
+            conditions.getAudienceRestrictions().add(restriction);
+        }
+
+        return conditions;
+    }
+
+    private static AuthnStatement buildAuthnStatement() {
+        AuthnStatement statement = OpenSAMLUtils.buildSAMLObject(AuthnStatement.class);
+        statement.setAuthnInstant(Instant.now().minus(Duration.ofSeconds(30)));
+
+        AuthnContext context = OpenSAMLUtils.buildSAMLObject(AuthnContext.class);
+        AuthnContextClassRef classRef = OpenSAMLUtils.buildSAMLObject(AuthnContextClassRef.class);
+        classRef.setURI(AuthnContext.PASSWORD_AUTHN_CTX);
+        context.setAuthnContextClassRef(classRef);
+        statement.setAuthnContext(context);
+
+        return statement;
+    }
+
     private static Subject buildBearerSubject(Instant notOnOrAfter) {
+        return buildBearerSubject(ACS_RECIPIENT, notOnOrAfter);
+    }
+
+    private static Subject buildBearerSubject(String recipient, Instant notOnOrAfter) {
         Subject subject = OpenSAMLUtils.buildSAMLObject(Subject.class);
         SubjectConfirmation confirmation = OpenSAMLUtils.buildSAMLObject(SubjectConfirmation.class);
         confirmation.setMethod(SubjectConfirmation.METHOD_BEARER);
         SubjectConfirmationData data = OpenSAMLUtils.buildSAMLObject(SubjectConfirmationData.class);
+        data.setRecipient(recipient);
         data.setNotOnOrAfter(notOnOrAfter);
         confirmation.setSubjectConfirmationData(data);
         subject.getSubjectConfirmations().add(confirmation);
