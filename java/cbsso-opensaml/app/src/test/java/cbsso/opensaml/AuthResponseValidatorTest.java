@@ -401,6 +401,41 @@ class AuthResponseValidatorTest {
     }
 
     @Test
+    void acceptsRecipientDifferingOnlyByCaseFromTheAssertionConsumerService() throws Exception {
+        // Entra echoes the Reply URL exactly as registered, and cbsso derives the expected one through
+        // name.lcase() - so a registration reading .../auth/MSSAML arrives against an expected
+        // .../auth/mssaml. Both resolve to the same handler on the same host, so they are the same
+        // endpoint, and rejecting one is a false negative that fails every login closed.
+        Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
+        Assertion assertion = buildAssertion();
+        assertion.setSubject(buildBearerSubject(
+                "https://sp.example.com/cbsso/auth/ENTRA", Instant.now().plus(Duration.ofMinutes(5))));
+        attachSignature(assertion);
+        response.getAssertions().add(assertion);
+        String xml = signAndSerialize(response, assertion.getSignature());
+
+        String returned = validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT);
+
+        assertEquals("Assertion", parse(returned).getDocumentElement().getLocalName());
+    }
+
+    @Test
+    void stillRejectsARecipientForAnotherHost() throws Exception {
+        // The case-insensitive comparison must not become a substring or host-blind one.
+        Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
+        Assertion assertion = buildAssertion();
+        assertion.setSubject(buildBearerSubject(
+                "https://attacker.example.net/cbsso/auth/entra", Instant.now().plus(Duration.ofMinutes(5))));
+        attachSignature(assertion);
+        response.getAssertions().add(assertion);
+        String xml = signAndSerialize(response, assertion.getSignature());
+
+        Exception e = assertThrows(Exception.class,
+                () -> validator.parseAndValidateAssertion(xml, IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
+        assertTrue(e.getMessage().contains("Recipient"), e.getMessage());
+    }
+
+    @Test
     void rejectsExcessivelyNestedDocument() {
         // No DTD, so disallow-doctype-decl does not help here: this is the nesting-depth case from
         // OpenSAML's 13 May 2026 advisory, and the parser has to refuse it.

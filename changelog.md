@@ -90,8 +90,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   read identity from anything else.
 - **SECURITY** The assertion is now bound to this service provider, not merely to the IdP.
   `parseAndValidateAssertion()` takes the expected audience and recipient, and requires a
-  `Conditions/AudienceRestriction` naming that audience, a bearer `SubjectConfirmationData/@Recipient` equal
-  to the ACS endpoint, and at least one `AuthnStatement`. Without those, an assertion the same IdP issued
+  `Conditions/AudienceRestriction` naming that audience, a bearer `SubjectConfirmationData/@Recipient`
+  matching the ACS endpoint - compared without case, since an IdP echoes the Reply URL exactly as registered
+  while this module derives the expected one through `name.lcase()` - and at least one `AuthnStatement`.
+  Without those, an assertion the same IdP issued
   for a different service provider - a second app registration in the same Entra tenant, say - verified
   cleanly here, because it carries the same signature key. Profiles 4.1.4.2 requires all three of Web
   Browser SSO. An unset audience or recipient is named as a provider misconfiguration rather than reported

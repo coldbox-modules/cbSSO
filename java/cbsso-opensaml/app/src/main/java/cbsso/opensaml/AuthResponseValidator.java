@@ -329,6 +329,13 @@ public class AuthResponseValidator {
 
     // The Recipient binds the assertion to this exact ACS endpoint, so one captured at another SP's endpoint
     // cannot be replayed here.
+    //
+    // Compared without case because the two sides derive the URL differently: an IdP echoes the Reply URL
+    // exactly as it was registered, while cbsso builds the expected one through name.lcase() - so a
+    // registration reading .../auth/MSSAML is checked against .../auth/mssaml. Both route to this same
+    // handler on this same host, so they denote one endpoint and rejecting the pair fails every login
+    // closed. This costs nothing: the host still has to be ours, so an assertion addressed to another
+    // service provider is refused exactly as before.
     private void validateRecipient(Assertion assertion, String expectedRecipient) throws Exception {
 
         if (assertion.getSubject() != null) {
@@ -338,7 +345,7 @@ public class AuthResponseValidator {
                 }
 
                 SubjectConfirmationData data = confirmation.getSubjectConfirmationData();
-                if (data != null && expectedRecipient.equals(data.getRecipient())) {
+                if (data != null && expectedRecipient.equalsIgnoreCase(data.getRecipient())) {
                     return;
                 }
             }
