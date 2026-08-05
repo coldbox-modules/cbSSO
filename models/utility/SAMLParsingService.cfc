@@ -67,8 +67,38 @@ component singleton {
 		};
 	}
 
+	/**
+	 * extractStatus() reaches this with the raw response, before any signature has been verified, on an
+	 * endpoint that needs no authentication - so the parser is hardened here rather than trusted.
+	 *
+	 * BoxLang's xmlParse resolves external general and parameter entities and permits DOCTYPE: XML.java's
+	 * newDocumentBuilder() sets disallow-doctype-decl to false and never sets FEATURE_SECURE_PROCESSING or
+	 * either external-entity feature, and passing `{ allowExternalEntities : false }` does nothing because
+	 * XMLParse declares a single argument. Refusing the declaration is what closes every entity vector at
+	 * once - reading container files out of band, driving outbound requests, and holding a request thread
+	 * open on an unroutable address. A SAML response has no legitimate use for a DOCTYPE.
+	 *
+	 * The leading-"<" check is a second primitive, not the same one: xmlParse treats input that does not
+	 * begin with "<" as a path or URL and fetches it.
+	 */
 	private any function parseSAML( required string samlXML ){
-		return xmlParse( arguments.samlXML.reReplace( "xmlns="".+?""", "", "all" ) );
+		var document = trim( arguments.samlXML );
+
+		if ( !document.startsWith( "<" ) ) {
+			throw(
+				type    = "SAMLParsingService.UnsafeDocument",
+				message = "SAML document is not XML"
+			);
+		}
+
+		if ( findNoCase( "<!DOCTYPE", document ) ) {
+			throw(
+				type    = "SAMLParsingService.UnsafeDocument",
+				message = "SAML document declares a DOCTYPE, which is not permitted"
+			);
+		}
+
+		return xmlParse( document.reReplace( "xmlns="".+?""", "", "all" ) );
 	}
 
 	/**

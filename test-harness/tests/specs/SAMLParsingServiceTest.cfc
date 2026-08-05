@@ -206,6 +206,92 @@ component extends="coldbox.system.testing.BaseTestCase" {
 				expect( result.success ).toBeFalse();
 				expect( result.errorMessage ).toStartWith( "Invalid SAML Response - could not be read" );
 			} );
+
+			it( "does not resolve an external entity that reads a local file", function(){
+				var canaryPath = getTempDirectory() & "samlparsingservicetest-xxe-" & createUUID() & ".txt";
+				var canary     = "XXE_CANARY_" & createUUID();
+				fileWrite( canaryPath, canary );
+
+				try {
+					var rawSAMLResponse = '<?xml version="1.0"?>
+						<!DOCTYPE samlp:Response [ <!ENTITY xxe SYSTEM "file://#canaryPath#"> ]>
+						<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">
+							<samlp:Status>
+								<samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Requester"/>
+								<samlp:StatusMessage>&xxe;</samlp:StatusMessage>
+							</samlp:Status>
+						</samlp:Response>';
+
+					var result = service.extractStatus( rawSAMLResponse );
+
+					expect( result.success ).toBeFalse();
+					expect( result.errorMessage ).notToInclude(
+						canary,
+						"the local file's contents reached the caller through an external entity"
+					);
+				} finally {
+					if ( fileExists( canaryPath ) ) {
+						fileDelete( canaryPath );
+					}
+				}
+			} );
+
+			it( "refuses a DOCTYPE even when its only entity is a harmless internal one", function(){
+				// The declaration itself is refused - not any particular entity it carries
+				var rawSAMLResponse = '<?xml version="1.0"?>
+					<!DOCTYPE samlp:Response [ <!ENTITY harmless "inline value"> ]>
+					<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">
+						<samlp:Status>
+							<samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
+						</samlp:Status>
+					</samlp:Response>';
+
+				expect( service.extractStatus( rawSAMLResponse ).success ).toBeFalse();
+			} );
+
+			it( "does not treat a non-XML string as a path to fetch", function(){
+				var canaryPath = getTempDirectory() & "samlparsingservicetest-path-" & createUUID() & ".txt";
+				var canary     = "PATH_CANARY_" & createUUID();
+				fileWrite( canaryPath, canary );
+
+				try {
+					var result = service.extractStatus( canaryPath );
+
+					expect( result.success ).toBeFalse();
+					expect( result.errorMessage ).notToInclude(
+						canary,
+						"a bare path string was read off disk instead of being rejected as not-XML"
+					);
+				} finally {
+					if ( fileExists( canaryPath ) ) {
+						fileDelete( canaryPath );
+					}
+				}
+			} );
+
+			it( "still reports the IdP's StatusMessage on a legitimate Entra failure", function(){
+				var rawSAMLResponse = '<?xml version="1.0"?>
+					<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">
+						<samlp:Status>
+							<samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Requester"/>
+							<samlp:StatusMessage>AADSTS50105: The signed in user is not assigned to a role for the application.</samlp:StatusMessage>
+						</samlp:Status>
+					</samlp:Response>';
+
+				var result = service.extractStatus( rawSAMLResponse );
+
+				expect( result.success ).toBeFalse();
+				expect( result.errorMessage ).toInclude( "AADSTS50105" );
+			} );
+
+			it( "still extracts identity from a normal serialized assertion", function(){
+				// extractIdentity() shares parseSAML() and, unlike extractStatus(), does not catch -
+				// a regression here throws instead of quietly returning a flag
+				var result = service.extractIdentity( assertionFrom( "validSAMLResponse.xml" ) );
+
+				expect( result.email ).toBe( "jbeers@ortussolutions.com" );
+				expect( result.userId ).toBe( "x" );
+			} );
 		} );
 	}
 

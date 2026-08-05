@@ -79,6 +79,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **SECURITY** `SAMLParsingService.parseSAML()` now refuses any document that declares a DOCTYPE, and
+  anything that does not start with `<`, before calling `xmlParse`. `extractStatus()` reaches this method
+  with the raw, unauthenticated `SAMLResponse` before any signature is verified, and BoxLang's `xmlParse`
+  resolves external general and parameter entities and imposes no depth limit - so a DOCTYPE let an attacker
+  read arbitrary files on the server, make the server issue outbound requests to arbitrary hosts, or tie up
+  a request thread against an unresponsive one. A SAML response has no legitimate use for a DOCTYPE, so the
+  declaration itself is refused rather than any specific entity within it.
 - **SECURITY** `AuthResponseValidator.parseAndValidate()` performed its signature check inside
   `for ( Assertion a : res.getAssertions() )`, so a response carrying **no** `Assertion` at all ran an empty
   loop and was returned as valid. The only other check compared the Response's `Issuer` - a string in the
