@@ -18,7 +18,6 @@ import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AttributeStatement;
 import org.opensaml.saml.saml2.core.Audience;
 import org.opensaml.saml.saml2.core.AudienceRestriction;
-import org.opensaml.saml.saml2.core.AuthnStatement;
 import org.opensaml.saml.saml2.core.Conditions;
 import org.opensaml.saml.saml2.core.Issuer;
 import org.opensaml.saml.saml2.core.Response;
@@ -43,7 +42,8 @@ public class AuthResponseValidator {
 
     private static final Duration CLOCK_SKEW = Duration.ofSeconds(60);
 
-    // Certificate loading is lazy, so this fetch happens on a user's first sign-in and an
+    // Certificate loading is lazy, so this fetch happens on a user's first sign-in
+    // and an
     // unresponsive IdP would otherwise hold that request thread open indefinitely.
     private static final Duration METADATA_CONNECT_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration METADATA_REQUEST_TIMEOUT = Duration.ofSeconds(10);
@@ -102,14 +102,41 @@ public class AuthResponseValidator {
     }
 
     /**
-     * @return the validated Assertion serialized as XML — the exact element whose signature verified.
+     * @return the validated Assertion serialized as XML — the exact element whose
+     *         signature verified.
      * @throws Exception on ANY validation failure.
      */
-    public String parseAndValidateAssertion(String rawSAMLXML, String expectedIssuer, String expectedAudience,
+    String parseAndValidateAssertion(String rawSAMLXML, String expectedIssuer, String expectedAudience,
             String expectedRecipient) throws Exception {
 
-        // Named before anything is parsed. An unset audience or recipient would otherwise reject every
-        // assertion with "no Audience matches this service provider """, which reads as the IdP's fault
+        return parseAndValidateAssertionInternal(rawSAMLXML, expectedIssuer, expectedAudience, expectedRecipient, null);
+    }
+
+    /**
+     * Validates a response for the AuthnRequest that initiated this login.
+     *
+     * @param expectedInResponseTo the server-side request ID that must be echoed by
+     *                             the Response and its
+     *                             accepted bearer SubjectConfirmationData
+     * @return the validated Assertion serialized as XML — the exact element whose
+     *         signature verified
+     * @throws Exception on ANY validation failure
+     */
+    public String parseAndValidateAssertion(String rawSAMLXML, String expectedIssuer, String expectedAudience,
+            String expectedRecipient, String expectedInResponseTo) throws Exception {
+
+        requireConfigured("expectedInResponseTo", expectedInResponseTo);
+        return parseAndValidateAssertionInternal(rawSAMLXML, expectedIssuer, expectedAudience, expectedRecipient,
+                expectedInResponseTo);
+    }
+
+    private String parseAndValidateAssertionInternal(String rawSAMLXML, String expectedIssuer,
+            String expectedAudience, String expectedRecipient, String expectedInResponseTo) throws Exception {
+
+        // Named before anything is parsed. An unset audience or recipient would
+        // otherwise reject every
+        // assertion with "no Audience matches this service provider """, which reads as
+        // the IdP's fault
         // rather than as this provider being misconfigured.
         requireConfigured("expectedIssuer", expectedIssuer);
         requireConfigured("expectedAudience", expectedAudience);
@@ -125,6 +152,10 @@ public class AuthResponseValidator {
 
         if (!validateIssuer(res, expectedIssuer)) {
             throw new Exception("Response issuer does not match expected issuer");
+        }
+
+        if (expectedInResponseTo != null && !expectedInResponseTo.equals(res.getInResponseTo())) {
+            throw new Exception("Response InResponseTo does not match the AuthnRequest that initiated this login");
         }
 
         if (!res.getEncryptedAssertions().isEmpty()) {
@@ -143,7 +174,8 @@ public class AuthResponseValidator {
         }
 
         // Primary XSW defence: the signature must conform to the SAML signature profile
-        // (enveloped, single Reference resolving to the signature's own parent) before any
+        // (enveloped, single Reference resolving to the signature's own parent) before
+        // any
         // cryptographic verification happens.
         try {
             new SAMLSignatureProfileValidator().validate(signature);
@@ -158,11 +190,12 @@ public class AuthResponseValidator {
 
         validateAssertionIssuer(assertion, expectedIssuer);
 
-        validateValidityWindow(assertion);
-
         validateAudience(assertion, expectedAudience);
 
-        validateRecipient(assertion, expectedRecipient);
+        SubjectConfirmationData recipientConfirmation = validateRecipient(assertion, expectedRecipient,
+                expectedInResponseTo);
+
+        validateValidityWindow(assertion, recipientConfirmation);
 
         validateAuthnStatement(assertion);
 
@@ -173,10 +206,14 @@ public class AuthResponseValidator {
         return SerializeSupport.nodeToString(dom);
     }
 
-    // Checked after the signature, and on the Assertion rather than the Response: Core 2.3.3 makes the
-    // Assertion's own Issuer mandatory and it sits inside the signed element, whereas the Response's is
-    // optional, unsigned, and therefore only ever the sender's word. The Response-level check above stays
-    // because it fails an obvious misconfiguration cheaply, but this is the one that is worth anything.
+    // Checked after the signature, and on the Assertion rather than the Response:
+    // Core 2.3.3 makes the
+    // Assertion's own Issuer mandatory and it sits inside the signed element,
+    // whereas the Response's is
+    // optional, unsigned, and therefore only ever the sender's word. The
+    // Response-level check above stays
+    // because it fails an obvious misconfiguration cheaply, but this is the one
+    // that is worth anything.
     private void validateAssertionIssuer(Assertion assertion, String expectedIssuer) throws Exception {
 
         Issuer issuer = assertion.getIssuer();
@@ -232,13 +269,16 @@ public class AuthResponseValidator {
                 + certs.size() + " cached IdP certificate(s)");
     }
 
-    // SAML 2.0 Profiles 4.1.4.2 (Web Browser SSO) requires the bearer SubjectConfirmationData to
-    // carry NotOnOrAfter, and this module has no replay protection (no InResponseTo check, no
-    // assertion-ID cache), so an assertion with no expiry at all would be replayable indefinitely.
-    // Therefore: at least one upper bound is mandatory — Conditions/@NotOnOrAfter or a bearer
-    // SubjectConfirmationData/@NotOnOrAfter — and every bound that IS present is enforced, with a
-    // 60s skew because IdP and app clocks differ.
-    private void validateValidityWindow(Assertion assertion) throws Exception {
+    // The accepted bearer SubjectConfirmationData is the proof that this assertion
+    // may be used at this
+    // ACS, so its own expiry cannot be supplied by a different confirmation in the
+    // same Subject. Conditions
+    // apply to the assertion as a whole and are enforced when present; at least one
+    // bound must come from
+    // Conditions or the accepted bearer confirmation. All bounds use a 60s skew
+    // because IdP and app clocks differ.
+    private void validateValidityWindow(Assertion assertion, SubjectConfirmationData recipientConfirmation)
+            throws Exception {
 
         Instant now = Instant.now();
         boolean hasUpperBound = false;
@@ -259,42 +299,31 @@ public class AuthResponseValidator {
             }
         }
 
-        if (assertion.getSubject() != null) {
-            for (SubjectConfirmation confirmation : assertion.getSubject().getSubjectConfirmations()) {
-                if (!SubjectConfirmation.METHOD_BEARER.equals(confirmation.getMethod())) {
-                    continue;
-                }
+        Instant notBefore = recipientConfirmation.getNotBefore();
+        if (notBefore != null && now.plus(CLOCK_SKEW).isBefore(notBefore)) {
+            throw new Exception(
+                    "Assertion is not yet valid: accepted bearer SubjectConfirmationData NotBefore=" + notBefore);
+        }
 
-                SubjectConfirmationData data = confirmation.getSubjectConfirmationData();
-                if (data == null) {
-                    continue;
-                }
-
-                Instant notBefore = data.getNotBefore();
-                if (notBefore != null && now.plus(CLOCK_SKEW).isBefore(notBefore)) {
-                    throw new Exception(
-                            "Assertion is not yet valid: bearer SubjectConfirmationData NotBefore=" + notBefore);
-                }
-
-                Instant notOnOrAfter = data.getNotOnOrAfter();
-                if (notOnOrAfter != null) {
-                    hasUpperBound = true;
-                    if (!now.minus(CLOCK_SKEW).isBefore(notOnOrAfter)) {
-                        throw new Exception("Assertion has expired: bearer SubjectConfirmationData NotOnOrAfter="
-                                + notOnOrAfter);
-                    }
-                }
+        Instant notOnOrAfter = recipientConfirmation.getNotOnOrAfter();
+        if (notOnOrAfter != null) {
+            hasUpperBound = true;
+            if (!now.minus(CLOCK_SKEW).isBefore(notOnOrAfter)) {
+                throw new Exception("Assertion has expired: accepted bearer SubjectConfirmationData NotOnOrAfter="
+                        + notOnOrAfter);
             }
         }
 
         if (!hasUpperBound) {
-            throw new Exception("Assertion carries no expiry: neither Conditions NotOnOrAfter nor a bearer "
-                    + "SubjectConfirmationData NotOnOrAfter is present");
+            throw new Exception("Assertion carries no expiry: neither Conditions NotOnOrAfter nor the accepted "
+                    + "bearer SubjectConfirmationData NotOnOrAfter is present");
         }
     }
 
-    // Without this, an assertion the IdP minted for a different relying party verifies here and signs the
-    // holder in. Profiles 4.1.4.2 requires an AudienceRestriction naming the SP, so - as with the expiry
+    // Without this, an assertion the IdP minted for a different relying party
+    // verifies here and signs the
+    // holder in. Profiles 4.1.4.2 requires an AudienceRestriction naming the SP, so
+    // - as with the expiry
     // above - absence is a rejection, not a pass.
     private void requireConfigured(String name, String value) throws Exception {
 
@@ -327,16 +356,38 @@ public class AuthResponseValidator {
                 + expectedAudience + "\"");
     }
 
-    // The Recipient binds the assertion to this exact ACS endpoint, so one captured at another SP's endpoint
+    /**
+     * Extracts the response request ID using the same hardened parser used for full
+     * validation.
+     */
+    public String getResponseInResponseTo(String rawSAMLXML) throws Exception {
+
+        Response response = OpenSAMLUtils.parseResponse(rawSAMLXML);
+        String inResponseTo = response.getInResponseTo();
+        if (inResponseTo == null || inResponseTo.trim().isEmpty()) {
+            throw new Exception("Response has no InResponseTo attribute");
+        }
+        return inResponseTo;
+    }
+
+    // The Recipient binds the assertion to this exact ACS endpoint, so one captured
+    // at another SP's endpoint
     // cannot be replayed here.
     //
-    // Compared without case because the two sides derive the URL differently: an IdP echoes the Reply URL
-    // exactly as it was registered, while cbsso builds the expected one through name.lcase() - so a
-    // registration reading .../auth/MSSAML is checked against .../auth/mssaml. Both route to this same
-    // handler on this same host, so they denote one endpoint and rejecting the pair fails every login
-    // closed. This costs nothing: the host still has to be ours, so an assertion addressed to another
+    // Compared without case because the two sides derive the URL differently: an
+    // IdP echoes the Reply URL
+    // exactly as it was registered, while cbsso builds the expected one through
+    // name.lcase() - so a
+    // registration reading .../auth/MSSAML is checked against .../auth/mssaml. Both
+    // route to this same
+    // handler on this same host, so they denote one endpoint and rejecting the pair
+    // fails every login
+    // closed. This costs nothing: the host still has to be ours, so an assertion
+    // addressed to another
     // service provider is refused exactly as before.
-    private void validateRecipient(Assertion assertion, String expectedRecipient) throws Exception {
+    private SubjectConfirmationData validateRecipient(Assertion assertion, String expectedRecipient,
+            String expectedInResponseTo)
+            throws Exception {
 
         if (assertion.getSubject() != null) {
             for (SubjectConfirmation confirmation : assertion.getSubject().getSubjectConfirmations()) {
@@ -345,8 +396,10 @@ public class AuthResponseValidator {
                 }
 
                 SubjectConfirmationData data = confirmation.getSubjectConfirmationData();
-                if (data != null && expectedRecipient.equalsIgnoreCase(data.getRecipient())) {
-                    return;
+                if (data != null
+                        && expectedRecipient.equalsIgnoreCase(data.getRecipient())
+                        && (expectedInResponseTo == null || expectedInResponseTo.equals(data.getInResponseTo()))) {
+                    return data;
                 }
             }
         }

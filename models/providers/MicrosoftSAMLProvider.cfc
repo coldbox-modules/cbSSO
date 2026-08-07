@@ -16,6 +16,7 @@ component
 	property name="AuthNRequestGenerator";
 	property name="responseValidator";
 	property name="SAMLParsingService" inject="SAMLParsingService@cbsso";
+	property name="SAMLRequestTracker" inject="SAMLRequestTracker@cbsso";
 
 	variables.name                    = "Entra";
 	variables.federationMetadataURL   = "";
@@ -70,15 +71,41 @@ component
 					.setErrorMessage( status.errorMessage );
 			}
 
+			var responseInResponseTo = variables.responseValidator.getResponseInResponseTo(
+				javacast( "string", data )
+			);
+			var assertionXML = "";
+			var identity      = {};
+
 			try {
+				if ( !SAMLRequestTracker.isPending( responseInResponseTo ) ) {
+					throw(
+						type    = "MicrosoftSAMLProvider.UnknownAuthNRequest",
+						message = "SAML Response does not match a pending authentication request"
+					);
+				}
+
 				// clientId is the SP Entity ID the AuthnRequest was issued under, so it is the Audience the
 				// IdP must have named; getRedirectUri() is the ACS URL, so it is the expected Recipient.
-				var assertionXML = variables.responseValidator.parseAndValidateAssertion(
+				// The final argument binds both the Response and the accepted bearer confirmation to this
+				// outstanding AuthnRequest.
+				assertionXML = variables.responseValidator.parseAndValidateAssertion(
 					javacast( "string", data ),
 					javacast( "string", variables.expectedIssuer ),
 					javacast( "string", variables.clientId ),
-					javacast( "string", getRedirectUri( event ) )
+					javacast( "string", getRedirectUri( event ) ),
+					javacast( "string", responseInResponseTo )
 				);
+
+				// Do not consume a pending request until every validation step succeeds. The atomic consume
+				// prevents two concurrent deliveries of the same valid response from both succeeding.
+				identity = SAMLParsingService.extractIdentity( assertionXML );
+				if ( !SAMLRequestTracker.consume( responseInResponseTo ) ) {
+					throw(
+						type    = "MicrosoftSAMLProvider.ReplayedAuthNRequest",
+						message = "SAML Response matched an authentication request that was already consumed"
+					);
+				}
 			} catch ( any e ) {
 				// A validation failure is our verdict on the response, not the IdP's, so the exception is
 				// what explains it - the IdP's own account of a rejection was already returned above.
@@ -87,11 +114,6 @@ component
 					.setRawResponseData( data )
 					.setErrorMessage( e.message );
 			}
-
-			// Read from the assertion the validator returned, never from `data`: that assertion is the one
-			// element whose signature verified, so nothing else in the response can supply a claim or a
-			// NameID and have it treated as identity.
-			var identity = SAMLParsingService.extractIdentity( assertionXML );
 
 			// Set only here, not on the failure returns above: an assertion whose signature did not verify
 			// has asserted nothing, and a consumer reading a claim off it would be trusting the sender.
@@ -112,6 +134,8 @@ component
 
 	private string function getRawSAMLRequest(){
 		var id = "id" & createUUID();
+
+		SAMLRequestTracker.remember( id );
 
 		initializeOpenSAMLLib();
 
