@@ -40,6 +40,11 @@ dependencies {
     implementation "org.opensaml:opensaml-security-impl:$opensamlVersion"
     implementation "org.opensaml:opensaml-profile-api:$opensamlVersion"
 
+    // OpenSAML 4.0.1 resolves Santuario 2.1.4, which predates CVE-2021-40690 - secureValidation is
+    // not carried into a KeyInfo built from a KeyInfoReference - and this library exists to validate
+    // SAML signatures. 2.3.x is the patched line that keeps the 2.x API OpenSAML 4 compiles against.
+    implementation "org.apache.santuario:xmlsec:2.3.4"
+
     implementation "org.slf4j:slf4j-api:1.7.36"
     implementation "org.slf4j:slf4j-simple:1.7.36"
 }

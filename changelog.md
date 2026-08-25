@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **SECURITY** Pin Santuario to 2.3.4. OpenSAML 4.0.1 resolves 2.1.4 transitively, which predates
+  CVE-2021-40690 - `secureValidation` is not carried through when a `KeyInfo` is built from a
+  `KeyInfoReference` - and Santuario is what actually verifies the assertion signatures this library
+  exists to check. 2.3.x is the patched line that keeps the 2.x API OpenSAML 4 compiles against.
+
 ## [3.0.0] - 2026-08-25
 
 ### Added
