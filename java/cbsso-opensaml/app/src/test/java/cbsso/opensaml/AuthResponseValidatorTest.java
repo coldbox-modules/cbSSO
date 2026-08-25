@@ -193,8 +193,10 @@ class AuthResponseValidatorTest {
     void rejectsAssertionWhoseIssuerDiffersFromTheResponseIssuer() throws Exception {
         Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
         Assertion assertion = buildAssertion();
-        // The Response Issuer still names the expected IdP, so the unsigned wrapper looks correct; only the
-        // signed Assertion disagrees. Signed by the trusted key, so nothing but the issuer check can reject it.
+        // The Response Issuer still names the expected IdP, so the unsigned wrapper
+        // looks correct; only the
+        // signed Assertion disagrees. Signed by the trusted key, so nothing but the
+        // issuer check can reject it.
         assertion.setIssuer(buildIssuer("https://someone-else.example.org"));
         attachSignature(assertion);
         response.getAssertions().add(assertion);
@@ -252,7 +254,8 @@ class AuthResponseValidatorTest {
     void rejectsAssertionWithNoExpiryAnywhere() throws Exception {
         Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
         Assertion assertion = buildAssertion();
-        assertion.setConditions(null);
+        // Keep the required audience restriction while removing both expiry bounds.
+        assertion.setConditions(buildConditions(SP_AUDIENCE));
         attachSignature(assertion);
         response.getAssertions().add(assertion);
         String xml = signAndSerialize(response, assertion.getSignature());
@@ -266,7 +269,8 @@ class AuthResponseValidatorTest {
     void acceptsAssertionWithOnlyBearerSubjectConfirmationExpiry() throws Exception {
         Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
         Assertion assertion = buildAssertion();
-        // Conditions still carry the AudienceRestriction, but no NotOnOrAfter of their own, so the bearer
+        // Conditions still carry the AudienceRestriction, but no NotOnOrAfter of their
+        // own, so the bearer
         // SubjectConfirmationData is the only source of the upper bound.
         assertion.setConditions(buildConditions(SP_AUDIENCE));
         assertion.setSubject(buildBearerSubject(Instant.now().plus(Duration.ofMinutes(5))));
@@ -402,10 +406,14 @@ class AuthResponseValidatorTest {
 
     @Test
     void acceptsRecipientDifferingOnlyByCaseFromTheAssertionConsumerService() throws Exception {
-        // Entra echoes the Reply URL exactly as registered, and cbsso derives the expected one through
-        // name.lcase() - so a registration reading .../auth/MSSAML arrives against an expected
-        // .../auth/mssaml. Both resolve to the same handler on the same host, so they are the same
-        // endpoint, and rejecting one is a false negative that fails every login closed.
+        // Entra echoes the Reply URL exactly as registered, and cbsso derives the
+        // expected one through
+        // name.lcase() - so a registration reading .../auth/MSSAML arrives against an
+        // expected
+        // .../auth/mssaml. Both resolve to the same handler on the same host, so they
+        // are the same
+        // endpoint, and rejecting one is a false negative that fails every login
+        // closed.
         Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
         Assertion assertion = buildAssertion();
         assertion.setSubject(buildBearerSubject(
@@ -421,7 +429,8 @@ class AuthResponseValidatorTest {
 
     @Test
     void stillRejectsARecipientForAnotherHost() throws Exception {
-        // The case-insensitive comparison must not become a substring or host-blind one.
+        // The case-insensitive comparison must not become a substring or host-blind
+        // one.
         Response response = buildResponse(IDP_ISSUER, StatusCode.SUCCESS);
         Assertion assertion = buildAssertion();
         assertion.setSubject(buildBearerSubject(
@@ -437,7 +446,8 @@ class AuthResponseValidatorTest {
 
     @Test
     void rejectsExcessivelyNestedDocument() {
-        // No DTD, so disallow-doctype-decl does not help here: this is the nesting-depth case from
+        // No DTD, so disallow-doctype-decl does not help here: this is the
+        // nesting-depth case from
         // OpenSAML's 13 May 2026 advisory, and the parser has to refuse it.
         StringBuilder nested = new StringBuilder(
                 "<samlp:Response xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">");
@@ -449,8 +459,10 @@ class AuthResponseValidatorTest {
         }
         nested.append("</samlp:Response>");
 
-        // Asserting on the parser's own complaint, not merely that it threw: without the depth limit this
-        // document is rejected later for having no Status, so a bare assertThrows would pass either way.
+        // Asserting on the parser's own complaint, not merely that it threw: without
+        // the depth limit this
+        // document is rejected later for having no Status, so a bare assertThrows would
+        // pass either way.
         Exception e = assertThrows(Exception.class, () -> validator.parseAndValidateAssertion(
                 nested.toString(), IDP_ISSUER, SP_AUDIENCE, ACS_RECIPIENT));
         assertTrue(e.getMessage() != null && e.getMessage().contains("maxElementDepth"), e.getMessage());
@@ -557,8 +569,10 @@ class AuthResponseValidatorTest {
         return response;
     }
 
-    // A fully valid assertion for the expected issuer, audience and recipient. The bearer
-    // SubjectConfirmationData deliberately carries no NotOnOrAfter so that the expiry tests can control
+    // A fully valid assertion for the expected issuer, audience and recipient. The
+    // bearer
+    // SubjectConfirmationData deliberately carries no NotOnOrAfter so that the
+    // expiry tests can control
     // where the upper bound comes from.
     private static Assertion buildAssertion() {
         Assertion assertion = OpenSAMLUtils.buildSAMLObject(Assertion.class);
