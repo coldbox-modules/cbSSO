@@ -75,7 +75,7 @@ component
 				javacast( "string", data )
 			);
 			var assertionXML = "";
-			var identity      = {};
+			var identity     = {};
 
 			try {
 				if ( !SAMLRequestTracker.isPending( responseInResponseTo ) ) {

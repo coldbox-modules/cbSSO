@@ -213,14 +213,14 @@ component extends="coldbox.system.testing.BaseTestCase" {
 				fileWrite( canaryPath, canary );
 
 				try {
-					var rawSAMLResponse = '<?xml version="1.0"?>
-						<!DOCTYPE samlp:Response [ <!ENTITY xxe SYSTEM "file://#canaryPath#"> ]>
-						<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">
+					var rawSAMLResponse = "<?xml version=""1.0""?>
+						<!DOCTYPE samlp:Response [ <!ENTITY xxe SYSTEM ""file://#canaryPath#""> ]>
+						<samlp:Response xmlns:samlp=""urn:oasis:names:tc:SAML:2.0:protocol"">
 							<samlp:Status>
-								<samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Requester"/>
+								<samlp:StatusCode Value=""urn:oasis:names:tc:SAML:2.0:status:Requester""/>
 								<samlp:StatusMessage>&xxe;</samlp:StatusMessage>
 							</samlp:Status>
-						</samlp:Response>';
+						</samlp:Response>";
 
 					var result = service.extractStatus( rawSAMLResponse );
 
@@ -238,13 +238,13 @@ component extends="coldbox.system.testing.BaseTestCase" {
 
 			it( "refuses a DOCTYPE even when its only entity is a harmless internal one", function(){
 				// The declaration itself is refused - not any particular entity it carries
-				var rawSAMLResponse = '<?xml version="1.0"?>
-					<!DOCTYPE samlp:Response [ <!ENTITY harmless "inline value"> ]>
-					<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">
+				var rawSAMLResponse = "<?xml version=""1.0""?>
+					<!DOCTYPE samlp:Response [ <!ENTITY harmless ""inline value""> ]>
+					<samlp:Response xmlns:samlp=""urn:oasis:names:tc:SAML:2.0:protocol"">
 						<samlp:Status>
-							<samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
+							<samlp:StatusCode Value=""urn:oasis:names:tc:SAML:2.0:status:Success""/>
 						</samlp:Status>
-					</samlp:Response>';
+					</samlp:Response>";
 
 				expect( service.extractStatus( rawSAMLResponse ).success ).toBeFalse();
 			} );
@@ -270,13 +270,13 @@ component extends="coldbox.system.testing.BaseTestCase" {
 			} );
 
 			it( "still reports the IdP's StatusMessage on a legitimate Entra failure", function(){
-				var rawSAMLResponse = '<?xml version="1.0"?>
-					<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">
+				var rawSAMLResponse = "<?xml version=""1.0""?>
+					<samlp:Response xmlns:samlp=""urn:oasis:names:tc:SAML:2.0:protocol"">
 						<samlp:Status>
-							<samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Requester"/>
+							<samlp:StatusCode Value=""urn:oasis:names:tc:SAML:2.0:status:Requester""/>
 							<samlp:StatusMessage>AADSTS50105: The signed in user is not assigned to a role for the application.</samlp:StatusMessage>
 						</samlp:Status>
-					</samlp:Response>';
+					</samlp:Response>";
 
 				var result = service.extractStatus( rawSAMLResponse );
 

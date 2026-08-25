@@ -85,10 +85,7 @@ component singleton {
 		var document = trim( arguments.samlXML );
 
 		if ( !document.startsWith( "<" ) ) {
-			throw(
-				type    = "SAMLParsingService.UnsafeDocument",
-				message = "SAML document is not XML"
-			);
+			throw( type = "SAMLParsingService.UnsafeDocument", message = "SAML document is not XML" );
 		}
 
 		if ( findNoCase( "<!DOCTYPE", document ) ) {
