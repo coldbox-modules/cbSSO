@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   request.
 - Isolate each definition in `ProviderService.registerProviders()`, so one unbuildable provider no longer
   costs the others, `onLoad()`, or the application boot.
+- Namespace the SAML request cache key by application name. `samlRequestCacheName` exists so the pending
+  AuthnRequest IDs can live in a distributed cache behind a load balancer, but such a cache is shared by
+  every application pointed at it, so two applications on one region accepted each other's request IDs as
+  pending. Surfaced on a multi-tenant deployment serving the same code under a different `this.name` per
+  tenant.
 
 ## [3.0.0] - 2026-08-25
 
