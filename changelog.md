@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Resolve the bundled OpenSAML classes through cbjavaloader again, and append this module's `/lib` to it
+  in `onLoad()`, so the jar is reachable on an engine that does not carry it on the server classpath.
+- Set the thread context classloader around OpenSAML initialisation and assertion verification, which
+  `ServiceLoader` reads to discover providers and crypto implementations on BoxLang.
+- Track certificate readiness separately from library initialisation, so a transient metadata failure is
+  retried rather than leaving the validator permanently holding no certificates.
+- Publish the generator and validator only once `initOpenSAML()` has returned, so a failed initialisation
+  cannot leave a provider unable to initialise for the life of the application.
+- Throw `MicrosoftSAMLProvider.MissingConfiguration` when `federationMetadataURL` is unset, rather than
+  failing against an empty string on the user's first sign-in.
+
+### Changed
+
+- Initialise OpenSAML and fetch federation metadata on first use rather than during module registration,
+  so application boot no longer loads a 17MB jar and calls out to every configured IdP before serving a
+  request.
+- Isolate each definition in `ProviderService.registerProviders()`, so one unbuildable provider no longer
+  costs the others, `onLoad()`, or the application boot.
+
 ## [3.0.0] - 2026-08-25
 
 ### Added

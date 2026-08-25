@@ -10,23 +10,37 @@ component accessors="true" singleton threadsafe {
 
 	variables.providers = {};
 
+	/**
+	 * One provider failing to build no longer aborts the rest, or the module's onLoad(), or the application
+	 * boot that onLoad() runs inside. A definition can fail for reasons wholly outside this module -
+	 * an unreachable IdP, a missing jar, a provider type that is not installed - and losing every other
+	 * provider plus the whole application to it is out of all proportion. The failure is logged and that
+	 * provider is left unregistered, so missing() reports it and Auth redirects to errorRedirect.
+	 */
 	ProviderService function registerProviders(){
 		variables.moduleSettings.providers.each( function( providerDefinition ){
-			var provider = wirebox.getInstance( providerDefinition.type );
+			try {
+				var provider = wirebox.getInstance( providerDefinition.type );
 
-			for ( var setting in providerDefinition ) {
-				if ( !structKeyExists( provider, "set#setting#" ) ) {
-					continue;
+				for ( var setting in providerDefinition ) {
+					if ( !structKeyExists( provider, "set#setting#" ) ) {
+						continue;
+					}
+
+					invoke(
+						provider,
+						"set#setting#",
+						[ providerDefinition[ setting ] ]
+					);
 				}
 
-				invoke(
-					provider,
-					"set#setting#",
-					[ providerDefinition[ setting ] ]
+				providers[ provider.getName() ] = provider;
+			} catch ( any e ) {
+				log.error(
+					"Could not register SSO provider [#providerDefinition.name ?: providerDefinition.type ?: "unnamed"#] - it will be unavailable until the next successful registration",
+					{ "error" : e.message, "detail" : e.detail ?: "" }
 				);
 			}
-
-			providers[ provider.getName() ] = provider;
 		} );
 		return this;
 	}

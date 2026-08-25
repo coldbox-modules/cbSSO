@@ -20,7 +20,12 @@ component {
 	this.entryPoint     = "/cbsso";
 
 	// Dependencies
-	this.dependencies = [ "hyper", "jwtcfml" ];
+	// cbjavaloader is load-order critical, not merely installed: onLoad() hands it this module's /lib so the
+	// bundled OpenSAML jar becomes resolvable. A module cannot place that jar on the classpath itself -
+	// this.javaSettings is an Application.cfc setting, read before any module registers, and ColdBox does
+	// not merge a module's copy of it - so without cbjavaloader every consuming app would have to add
+	// cbsso's own lib path to its Application.cfc.
+	this.dependencies = [ "hyper", "jwtcfml", "cbjavaloader" ];
 
 	routes = [
 		{
@@ -68,7 +73,15 @@ component {
 	function onLoad(){
 		ensureSAMLRequestCache();
 
-		// Register all app disks
+		// Must precede registerProviders(): a SAML provider resolves cbsso.opensaml.* out of this path.
+		// Guarded because /lib is a build artifact of the Gradle project in /java and is absent from a
+		// source checkout, where appendPaths would throw "Invalid library path". Skipping it there leaves a
+		// SAML provider to fail on first use with its own error rather than taking the application down.
+		var openSAMLLibPath = modulePath & "/lib";
+		if ( directoryExists( openSAMLLibPath ) ) {
+			wirebox.getInstance( "loader@cbjavaloader" ).appendPaths( openSAMLLibPath );
+		}
+
 		wirebox.getInstance( "ProviderService@cbsso" ).registerProviders();
 
 		if ( settings.enableCBAuthIntegration ) {
