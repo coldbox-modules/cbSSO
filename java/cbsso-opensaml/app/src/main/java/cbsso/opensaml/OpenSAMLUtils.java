@@ -1,8 +1,9 @@
 package cbsso.opensaml;
 
 import java.io.ByteArrayInputStream;
-import java.security.cert.X509Certificate;
+import java.nio.charset.StandardCharsets;
 
+import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -16,9 +17,6 @@ import org.opensaml.core.xml.io.Unmarshaller;
 import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.saml.saml2.core.Response;
-import org.opensaml.security.x509.BasicX509Credential;
-import org.opensaml.xmlsec.signature.support.SignatureException;
-import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -28,6 +26,9 @@ import net.shibboleth.utilities.java.support.security.impl.RandomIdentifierGener
 import net.shibboleth.utilities.java.support.xml.SerializeSupport;
 
 public class OpenSAMLUtils {
+    private static final String MAX_ELEMENT_DEPTH = "25";
+    private static final String MAX_ELEMENT_ATTRIBUTES = "30";
+
     private static Logger logger = LoggerFactory.getLogger(OpenSAMLUtils.class);
     private static RandomIdentifierGenerationStrategy secureRandomIdGenerator;
 
@@ -97,22 +98,45 @@ public class OpenSAMLUtils {
         return SerializeSupport.prettyPrintXML(element);
     }
 
-    public static Response parseResponse(String samlResponse) throws Exception {
+    /**
+     * The depth and attribute limits are the defaults OpenSAML itself adopted in 5.2.2, in response to its
+     * 13 May 2026 advisory on unauthenticated memory and CPU exhaustion from crafted XML. Upgrading the
+     * library would not cover this method: those defaults apply to OpenSAML's own decoders and ParserPool,
+     * and parseResponse() builds its own factory - so the limits have to be set here explicitly. Disabling
+     * DOCTYPE already rules out entity expansion, but nesting depth needs no DTD at all.
+     */
+    public static DocumentBuilderFactory secureDocumentBuilderFactory() throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document document = builder.parse(new ByteArrayInputStream(samlResponse.getBytes()));
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
+        factory.setAttribute("http://www.oracle.com/xml/jaxp/properties/maxElementDepth", MAX_ELEMENT_DEPTH);
+        factory.setAttribute("http://www.oracle.com/xml/jaxp/properties/elementAttributeLimit",
+                MAX_ELEMENT_ATTRIBUTES);
+        return factory;
+    }
+
+    public static Response parseResponse(String samlResponse) throws Exception {
+        DocumentBuilder builder = secureDocumentBuilderFactory().newDocumentBuilder();
+        Document document = builder.parse(new ByteArrayInputStream(samlResponse.getBytes(StandardCharsets.UTF_8)));
 
         Element element = document.getDocumentElement();
         UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
         Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
+        if (unmarshaller == null) {
+            throw new Exception("Document is not a saml2p:Response: no unmarshaller for "
+                    + element.getNamespaceURI() + ":" + element.getLocalName());
+        }
 
         XMLObject xmlObject = unmarshaller.unmarshall(element);
+        if (!(xmlObject instanceof Response)) {
+            throw new Exception("Document is not a saml2p:Response: got " + xmlObject.getElementQName());
+        }
         return (Response) xmlObject;
-    }
-
-    public static void verifySignature(Response response, X509Certificate certificate) throws SignatureException {
-        BasicX509Credential credential = new BasicX509Credential(certificate);
-        SignatureValidator.validate(response.getAssertions().get(0).getSignature(), credential);
     }
 }

@@ -16,9 +16,11 @@ component
 	property name="AuthNRequestGenerator";
 	property name="responseValidator";
 	property name="SAMLParsingService" inject="SAMLParsingService@cbsso";
+	property name="SAMLRequestTracker" inject="SAMLRequestTracker@cbsso";
 
-	variables.name                  = "Entra";
-	variables.federationMetadataURL = "";
+	variables.name                    = "Entra";
+	variables.federationMetadataURL   = "";
+	variables.maxDecodedResponseChars = 1048576;
 
 	public string function getName(){
 		return variables.name;
@@ -46,39 +48,84 @@ component
 		initializeOpenSAMLLib();
 
 		try {
-			var decoded  = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
-			var data     = charsetEncode( decoded, "utf-8" );
-			var samlData = SAMLParsingService.extractUserInfo( data );
+			var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
+			var data    = charsetEncode( decoded, "utf-8" );
+
+			// extractStatus below parses attacker-supplied XML before the hardened Java validator sees it,
+			// so an unbounded document is a cheap denial of service.
+			if ( len( data ) > variables.maxDecodedResponseChars ) {
+				throw(
+					type    = "MicrosoftSAMLProvider.ResponseTooLarge",
+					message = "SAMLResponse decoded to #len( data )# characters, exceeding the #variables.maxDecodedResponseChars# character limit"
+				);
+			}
+
+			var status = SAMLParsingService.extractStatus( data );
 
 			authResponse.setRawResponseData( data );
 
+			if ( !status.success ) {
+				return authResponse
+					.setWasSuccessful( false )
+					.setRawResponseData( data )
+					.setErrorMessage( status.errorMessage );
+			}
+
+			var responseInResponseTo = variables.responseValidator.getResponseInResponseTo(
+				javacast( "string", data )
+			);
+			var assertionXML = "";
+			var identity     = {};
+
 			try {
-				variables.AuthNRequestGenerator.initOpenSAML();
-				variables.responseValidator.parseAndValidate(
+				if ( !SAMLRequestTracker.isPending( responseInResponseTo ) ) {
+					throw(
+						type    = "MicrosoftSAMLProvider.UnknownAuthNRequest",
+						message = "SAML Response does not match a pending authentication request"
+					);
+				}
+
+				// clientId is the SP Entity ID the AuthnRequest was issued under, so it is the Audience the
+				// IdP must have named; getRedirectUri() is the ACS URL, so it is the expected Recipient.
+				// The final argument binds both the Response and the accepted bearer confirmation to this
+				// outstanding AuthnRequest.
+				assertionXML = variables.responseValidator.parseAndValidateAssertion(
 					javacast( "string", data ),
-					variables.expectedIssuer
+					javacast( "string", variables.expectedIssuer ),
+					javacast( "string", variables.clientId ),
+					javacast( "string", getRedirectUri( event ) ),
+					javacast( "string", responseInResponseTo )
 				);
+
+				// Do not consume a pending request until every validation step succeeds. The atomic consume
+				// prevents two concurrent deliveries of the same valid response from both succeeding.
+				identity = SAMLParsingService.extractIdentity( assertionXML );
+				if ( !SAMLRequestTracker.consume( responseInResponseTo ) ) {
+					throw(
+						type    = "MicrosoftSAMLProvider.ReplayedAuthNRequest",
+						message = "SAML Response matched an authentication request that was already consumed"
+					);
+				}
 			} catch ( any e ) {
+				// A validation failure is our verdict on the response, not the IdP's, so the exception is
+				// what explains it - the IdP's own account of a rejection was already returned above.
 				return authResponse
 					.setWasSuccessful( false )
 					.setRawResponseData( data )
-					.setErrorMessage( extractErrorMessage( xmlData ) )
+					.setErrorMessage( e.message );
 			}
 
-
-			if ( !samlData.success ) {
-				return authResponse
-					.setWasSuccessful( false )
-					.setRawResponseData( data )
-					.setErrorMessage( samlData.errorMessage );
-			}
-
+			// Set only here, not on the failure returns above: an assertion whose signature did not verify
+			// has asserted nothing, and a consumer reading a claim off it would be trusting the sender.
 			return authResponse
 				.setWasSuccessful( true )
-				.setFirstName( samlData.firstName )
-				.setLastName( samlData.lastName )
-				.setEmail( samlData.email )
-				.setUserId( samlData.userId )
+				.setFirstName( identity.firstName )
+				.setLastName( identity.lastName )
+				.setEmail( identity.email )
+				.setUserId( identity.userId )
+				.setClaims( identity.claims )
+				.setNameId( identity.nameId )
+				.setNameIdFormat( identity.nameIdFormat )
 				.setRawResponseData( data );
 		} catch ( any e ) {
 			return authResponse.setWasSuccessful( false ).setErrorMessage( e.message );
@@ -87,6 +134,8 @@ component
 
 	private string function getRawSAMLRequest(){
 		var id = "id" & createUUID();
+
+		SAMLRequestTracker.remember( id );
 
 		initializeOpenSAMLLib();
 
@@ -105,10 +154,6 @@ component
 
 		output = javacast( "byte[]", arraySlice( output, 1, compressedDataLength ) );
 		return binaryEncode( output, "base64" );
-	}
-
-	private boolean function extractErrorMessage( required xmlDoc ){
-		return xmlSearch( xmlDoc, "//samlp:StatusMessage" )[ 1 ].xmlchildren[ 1 ].xmltext;
 	}
 
 	private void function initializeOpenSAMLLib(){

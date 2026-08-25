@@ -30,6 +30,47 @@ component {
 ```
 Your app now has the ability to direct users to Google for authentication!
 
+### SAML request replay cache
+
+The Microsoft SAML provider stores outstanding authentication request IDs in a CacheBox cache. By default,
+cbSSO creates an application cache named `cbssoSAMLRequests` with a 10-minute timeout and a maximum of 10,000
+entries.
+
+For a clustered deployment, register a distributed CacheBox cache and select it in the cbSSO module settings:
+
+```cfml
+// config/CacheBox.cfc
+component {
+    function configure(){
+        cacheBox = {
+            caches: {
+                samlRequests: {
+                    provider: "your.distributed.CacheBoxProvider",
+                    properties: {
+                        // Provider-specific settings go here
+                    }
+                }
+            }
+        };
+    }
+}
+
+// config/modules/cbsso.cfc
+component {
+    function configure(){
+        return {
+            "samlRequestCacheName": "samlRequests",
+            "providers": [
+                // Provider configuration
+            ]
+        };
+    }
+}
+```
+
+When `samlRequestCacheName` is set, the named cache must already be registered with CacheBox when cbSSO
+activates; otherwise module activation fails rather than silently falling back to local memory.
+
 For more complete documentation covering features and implementation check out our documentation site [cbsso.ortusbooks.com](https://cbsso.ortusbooks.com).
 
 

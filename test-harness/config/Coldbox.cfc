@@ -59,6 +59,8 @@
 			},
 			"cbsso" : {
 				"enableCBAuthIntegration": true,
+				"errorRedirect"          : "main.ssoError",
+				"successRedirect"        : "main.ssoSuccess",
 				"providers" : [
 					{
 						type: "CustomProvider"

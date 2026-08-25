@@ -83,7 +83,9 @@ public class AuthNRequestGenerator {
     private static NameIDPolicy buildNameIdPolicy() {
         NameIDPolicy nameIDPolicy = OpenSAMLUtils.buildSAMLObject(NameIDPolicy.class);
         nameIDPolicy.setAllowCreate(true);
-        nameIDPolicy.setFormat(NameIDType.TRANSIENT);
+        // Not TRANSIENT: SAMLParsingService.extractUserId() rejects a transient NameID when there is no
+        // objectidentifier claim, so a compliant IdP returning exactly what was asked for would be refused.
+        nameIDPolicy.setFormat(NameIDType.PERSISTENT);
 
         return nameIDPolicy;
     }

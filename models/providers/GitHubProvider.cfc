@@ -77,7 +77,8 @@ component
 				.setWasSuccessful( true )
 				.setName( userData.name )
 				.setEmail( userData.email )
-				.setUserId( userData.id );
+				.setUserId( userData.id )
+				.setClaims( userData );
 		} catch ( any e ) {
 			return authResponse.setWasSuccessful( false ).setErrorMessage( e.message );
 		}

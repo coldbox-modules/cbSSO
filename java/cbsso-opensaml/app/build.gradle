@@ -26,6 +26,9 @@ dependencies {
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // Test fixtures generate a throwaway keypair and self-signed cert to sign SAML assertions.
+    testImplementation 'org.bouncycastle:bcpkix-jdk15on:1.64'
+
     // This dependency is used by the application.
     implementation libs.guava
 
