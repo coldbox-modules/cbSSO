@@ -9,31 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- Resolve the bundled OpenSAML classes through cbjavaloader again, and append this module's `/lib` to it
-  in `onLoad()`, so the jar is reachable on an engine that does not carry it on the server classpath.
-- Set the thread context classloader around OpenSAML initialisation and assertion verification, which
-  `ServiceLoader` reads to discover providers and crypto implementations on BoxLang.
-- Track certificate readiness separately from library initialisation, so a transient metadata failure is
-  retried rather than leaving the validator permanently holding no certificates.
-- Publish the generator and validator only once `initOpenSAML()` has returned, so a failed initialisation
-  cannot leave a provider unable to initialise for the life of the application.
-- Throw `MicrosoftSAMLProvider.MissingConfiguration` when `federationMetadataURL` is unset, rather than
-  failing against an empty string on the user's first sign-in.
-
-### Changed
-
-- Initialise OpenSAML and fetch federation metadata on first use rather than during module registration,
-  so application boot no longer loads a 17MB jar and calls out to every configured IdP before serving a
-  request.
-- Isolate each definition in `ProviderService.registerProviders()`, so one unbuildable provider no longer
-  costs the others, `onLoad()`, or the application boot.
-- Namespace the SAML request cache key by application name. `samlRequestCacheName` exists so the pending
-  AuthnRequest IDs can live in a distributed cache behind a load balancer, but such a cache is shared by
-  every application pointed at it, so two applications on one region accepted each other's request IDs as
-  pending. Surfaced on a multi-tenant deployment serving the same code under a different `this.name` per
-  tenant.
+## [3.0.0] - 2026-08-26
 
 ## [3.0.0] - 2026-08-25
 
@@ -101,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/coldbox-modules/cbSSO/compare/v3.0.0...HEAD
 
-[3.0.0]: https://github.com/coldbox-modules/cbSSO/compare/v2.1.0...v3.0.0
+[3.0.0]: https://github.com/coldbox-modules/cbSSO/compare/v3.0.0...v3.0.0
+
 
 [2.1.0]: https://github.com/coldbox-modules/cbSSO/compare/v2.0.0...v2.1.0
 
