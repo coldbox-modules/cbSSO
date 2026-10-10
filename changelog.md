@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Renamed the misspelled `startAuthenticationWorflow()` provider method to `startAuthenticationWorkflow()`. The old name remains as a deprecated alias on `BaseProvider`, and the `start` handler falls back to it for custom providers that only implement the old name.
+
 ## [3.0.0] - 2026-08-26
 
 ## [3.0.0] - 2026-08-25

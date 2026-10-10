@@ -25,7 +25,7 @@ component
 		return variables.name;
 	}
 
-	public string function startAuthenticationWorflow( required any event ){
+	public string function startAuthenticationWorkflow( required any event ){
 		return oAuthService.buildAuthUrl(
 			authEndpoint  = getAuthEndpoint(),
 			client_id     = getClientId(),

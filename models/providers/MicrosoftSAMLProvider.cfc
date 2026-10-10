@@ -42,7 +42,7 @@ component
 		return this;
 	}
 
-	public string function startAuthenticationWorflow( required any event ){
+	public string function startAuthenticationWorkflow( required any event ){
 		var encoded = encodeForURL( deflateAndBase64Enocde( getRawSAMLRequest() ) );
 
 		return "#variables.authEndpoint#?SAMLRequest=#encoded#";

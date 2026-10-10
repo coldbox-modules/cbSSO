@@ -59,6 +59,16 @@ component extends="coldbox.system.testing.BaseTestCase" {
 				expect( event.getValue( "relocate_URL", "" ) ).toInclude( "/main/fakeIdentityProvider" );
 			} );
 
+			it( "keeps the deprecated startAuthenticationWorflow alias working on providers", function(){
+				var provider = getInstance( "CustomProvider" );
+				expect( provider.startAuthenticationWorflow( getRequestContext() ) ).toBe(
+					provider.startAuthenticationWorkflow( getRequestContext() )
+				);
+				var google = getInstance( "GoogleProvider@cbsso" );
+				expect( structKeyExists( google, "startAuthenticationWorkflow" ) ).toBeTrue();
+				expect( structKeyExists( google, "startAuthenticationWorflow" ) ).toBeTrue();
+			} );
+
 			it( "does not announce CBSSOAuthorization for a missing provider", function(){
 				execute( route = "/cbsso/auth/notaprovider", renderResults = false );
 

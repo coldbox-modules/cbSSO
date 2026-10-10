@@ -12,4 +12,11 @@ component {
 		return "#event.getHTMLBaseURL()#cbsso/auth/#variables.name.lcase()#";
 	}
 
+	/**
+	 * @deprecated Misspelled alias kept for backward compatibility. Use startAuthenticationWorkflow() instead. Will be removed in the next major release.
+	 */
+	public string function startAuthenticationWorflow( required any event ){
+		return startAuthenticationWorkflow( arguments.event );
+	}
+
 }

@@ -23,7 +23,12 @@ component {
 	}
 
 	function start( event, rc, prc ){
-		relocate( url = prc.ssoProvider.startAuthenticationWorflow( event ) );
+		// Fall back to the deprecated misspelled method for custom providers written against cbSSO <= 3.0
+		if ( structKeyExists( prc.ssoProvider, "startAuthenticationWorkflow" ) ) {
+			relocate( url = prc.ssoProvider.startAuthenticationWorkflow( event ) );
+		} else {
+			relocate( url = prc.ssoProvider.startAuthenticationWorflow( event ) );
+		}
 	}
 
 	function authorize( event, rc, prc ){
