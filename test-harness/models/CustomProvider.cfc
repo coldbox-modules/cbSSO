@@ -9,7 +9,7 @@ component implements="cbsso.models.ISSOIntegrationProvider" {
 		return "";
 	}
 
-	public string function startAuthenticationWorflow( required any event ){
+	public string function startAuthenticationWorkflow( required any event ){
 		return "http://" & cgi.HTTP_HOST & "/main/fakeIdentityProvider";
 	}
 
@@ -24,6 +24,13 @@ component implements="cbsso.models.ISSOIntegrationProvider" {
 			.setWasSuccessful( true )
 			.setEmail( "jdoe@example.com" )
 			.setUserId( "user-456" );
+	}
+
+	/**
+	 * @deprecated Misspelled alias kept for backward compatibility. Use startAuthenticationWorkflow() instead. Will be removed in the next major release.
+	 */
+	public string function startAuthenticationWorflow( required any event ){
+		return startAuthenticationWorkflow( arguments.event );
 	}
 
 }
