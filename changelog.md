@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Require `hyper` `^8.0.1`. hyper 7.x calls `interceptorService.processState()`, which ColdBox 8 removed, so every OAuth HTTP call (token exchange, JWKS, profile) threw on ColdBox 8. hyper 8.0.1+ calls `announce()` when available and still falls back to `processState()` on older ColdBox. Fixes #12.
+
 ## [3.0.0] - 2026-08-26
 
 ## [3.0.0] - 2026-08-25
