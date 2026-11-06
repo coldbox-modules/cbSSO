@@ -33,21 +33,19 @@ component extends="coldbox.system.testing.BaseTestCase" {
 			} );
 
 			it( "logs a user in and redirects to successRedirect on a successful authorization", function(){
-				var rc          = getRequestContext().getCollection();
-				rc.providerName = "CustomProvider";
-
-				var event = execute( event = "cbsso:Auth.authorize", renderResults = false );
+				// Route parameters replace values left in URL by earlier routing tests on ColdBox 7.
+				var event = execute( route = "/cbsso/auth/CustomProvider", renderResults = false );
 
 				expect( authService.isLoggedIn() ).toBeTrue();
 				expect( event.getValue( "relocate_event", "__none__" ) ).toBe( moduleSettings.successRedirect );
 			} );
 
 			it( "redirects to errorRedirect and logs nobody in on a failed authorization", function(){
-				var rc          = getRequestContext().getCollection();
-				rc.providerName = "CustomProvider";
-				rc.fakeFailure  = true;
-
-				var event = execute( event = "cbsso:Auth.authorize", renderResults = false );
+				var event = execute(
+					route         = "/cbsso/auth/CustomProvider",
+					queryString   = "fakeFailure=true",
+					renderResults = false
+				);
 
 				expect( authService.isLoggedIn() ).toBeFalse();
 				expect( event.getValue( "relocate_event", "__none__" ) ).toBe( moduleSettings.errorRedirect );
