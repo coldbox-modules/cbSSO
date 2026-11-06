@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Read SAML identity only from the Assertion's own `Subject` and `AttributeStatement`. The extraction searched every descendant of the Assertion, including its enveloped `ds:Signature`, which the signature does not cover. A sender could add a `Subject` or `Attribute` to `ds:KeyInfo` of a validly signed assertion and have it read in place of the signed one.
+- Parse SAML documents as received instead of stripping `xmlns="..."` with a regex first. Comments are outside the signed content, and comments shaped like `<!--xmlns="-->...<!--"-->` steered the regex into deleting part of a signed NameID or claim value.
 - Require `hyper` `^8.0.1`. hyper 7.x calls `interceptorService.processState()`, which ColdBox 8 removed, so every OAuth HTTP call (token exchange, JWKS, profile) threw on ColdBox 8. hyper 8.0.1+ calls `announce()` when available and still falls back to `processState()` on older ColdBox. Fixes #12.
 
 ## [3.0.0] - 2026-08-26
