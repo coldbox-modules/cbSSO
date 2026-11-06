@@ -148,10 +148,12 @@ component singleton {
 	private struct function extractClaims( required xmlDoc ){
 		var claims = {};
 
-		for ( var node in xmlSearch(
-			xmlDoc,
-			"/*[local-name()='Assertion']/*[local-name()='AttributeStatement']/*[local-name()='Attribute'][@Name]"
-		) ) {
+		for (
+			var node in xmlSearch(
+				xmlDoc,
+				"/*[local-name()='Assertion']/*[local-name()='AttributeStatement']/*[local-name()='Attribute'][@Name]"
+			)
+		) {
 			var name = trim( node.xmlAttributes.Name );
 
 			if ( !len( name ) ) {
