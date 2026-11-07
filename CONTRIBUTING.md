@@ -42,7 +42,7 @@ If you have any questions on usage, professional support or just ideas to bounce
 
 ## Pull Request Guidelines
 
-- The `(master|main)` branch is just a snapshot of the latest stable release. All development should be done in dedicated branches. Do not submit PRs against the master branch. They will be closed.
+- The `main` branch is just a snapshot of the latest stable release. All development should be done in dedicated branches. Do not submit feature or bug-fix PRs against `main`; target `development` instead.
 - All pull requests should be sent to the `development` branch or the appropriate LTS branch (`releases/v{version}`).
 - It's OK to have multiple small commits as you work on the PR - GitHub will automatically squash it before merging.
 - Make sure all local tests pass before submitting the merge.

@@ -112,6 +112,33 @@ component extends="coldbox.system.testing.BaseTestCase" {
 				expect( serializeJSON( result ) ).notToInclude( "Zm9yZ2VkTmFtZUlkPT0=" );
 			} );
 
+			it( "ignores claims and a Subject placed inside the signature's KeyInfo", function(){
+				var assertion = assertionFrom( "keyInfoInjectedSAMLResponse.xml" );
+
+				expect( assertion ).toInclude(
+					"attacker@evil.example",
+					"the fixture has to carry the injected claim for this to prove anything"
+				);
+
+				var result = service.extractIdentity( assertion );
+
+				expect( result.email ).toBe( "ada.lovelace@example.com" );
+				expect( result.userId ).toBe( "0c8f4a52-1b7d-4e39-9f6a-3d2c5b8e7a14" );
+				expect( result.nameId ).toBe( "V3JpdHRlbkJ5T3J0dXNTb2x1dGlvbnM9" );
+				expect( result.claims[ "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress" ] ).toBe( [ "ada.lovelace@example.com" ] );
+				expect( result.claims ).notToHaveKey( "https://example.com/claims/injectedclaim" );
+				expect( serializeJSON( result ) ).notToInclude( "attacker@evil.example" );
+				expect( serializeJSON( result ) ).notToInclude( "aW5qZWN0ZWROYW1lSWQ=" );
+			} );
+
+			it( "reads the whole signed value when comments have been inserted into it", function(){
+				var result = service.extractIdentity( assertionFrom( "commentSplitSAMLResponse.xml" ) );
+
+				expect( result.email ).toBe( "ada.lovelace@example.com.attacker.example" );
+				expect( result.nameId ).toBe( "ada.lovelace@example.com.attacker.example" );
+				expect( result.claims[ "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress" ] ).toBe( [ "ada.lovelace@example.com.attacker.example" ] );
+			} );
+
 			it( "accepts an assertion asserting no display-name claims, which SAML never required", function(){
 				var assertionXML = assertionFrom( "prefixedSAMLResponse.xml" )
 					.replace(

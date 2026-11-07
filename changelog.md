@@ -9,7 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.0.0] - 2026-08-26
+### Fixed
+
+- Read SAML identity only from the Assertion's own `Subject` and `AttributeStatement`. The extraction searched every descendant of the Assertion, including its enveloped `ds:Signature`, which the signature does not cover. A sender could add a `Subject` or `Attribute` to `ds:KeyInfo` of a validly signed assertion and have it read in place of the signed one.
+- Parse SAML documents as received instead of stripping `xmlns="..."` with a regex first. Comments are outside the signed content, and comments shaped like `<!--xmlns="-->...<!--"-->` steered the regex into deleting part of a signed NameID or claim value.
+- Require `hyper` `^8.0.1`. hyper 7.x calls `interceptorService.processState()`, which ColdBox 8 removed, so every OAuth HTTP call (token exchange, JWKS, profile) threw on ColdBox 8. hyper 8.0.1+ calls `announce()` when available and still falls back to `processState()` on older ColdBox. Fixes #12.
+
+- Resolve bundled OpenSAML classes through cbjavaloader and register this module's `/lib`, so the jar is available without a server-wide classpath entry.
+- Set the thread context classloader during OpenSAML initialization and assertion verification so BoxLang can discover service and cryptography providers.
+- Retry certificate loading after transient metadata failures instead of leaving a provider permanently without certificates.
+- Publish the SAML generator and validator only after OpenSAML initialization succeeds, allowing failed initialization to be retried.
+- Report `MicrosoftSAMLProvider.MissingConfiguration` when `federationMetadataURL` is unset.
+- Raise bundled XML Security, Woodstox, HttpClient, Commons IO, and Velocity dependencies past the CVEs addressed in [#28](https://github.com/coldbox-modules/cbSSO/pull/28).
+
+### Changed
+
+- Initialize OpenSAML and fetch federation metadata on first use rather than during module registration, avoiding jar loading and IdP requests during application boot.
+- Isolate provider registration so one provider's initialization failure does not prevent other providers or the application from loading.
+- Namespace pending SAML request cache keys by application name so applications sharing a distributed cache cannot accept each other's request IDs.
 
 ## [3.0.0] - 2026-08-25
 
@@ -77,8 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/coldbox-modules/cbSSO/compare/v3.0.0...HEAD
 
-[3.0.0]: https://github.com/coldbox-modules/cbSSO/compare/v3.0.0...v3.0.0
-
+[3.0.0]: https://github.com/coldbox-modules/cbSSO/compare/v2.1.0...v3.0.0
 
 [2.1.0]: https://github.com/coldbox-modules/cbSSO/compare/v2.0.0...v2.1.0
 

@@ -12,7 +12,8 @@ component
 	property name="federationMetadataURL";
 	property name="expectedIssuer";
 
-	property name="wirebox" inject="wirebox";
+	property name="wirebox"    inject="wirebox";
+	property name="javaLoader" inject="loader@cbjavaloader";
 	property name="AuthNRequestGenerator";
 	property name="responseValidator";
 	property name="SAMLParsingService" inject="SAMLParsingService@cbsso";
@@ -21,17 +22,22 @@ component
 	variables.name                    = "Entra";
 	variables.federationMetadataURL   = "";
 	variables.maxDecodedResponseChars = 1048576;
+	variables.certificatesCached      = false;
 
 	public string function getName(){
 		return variables.name;
 	}
 
+	/**
+	 * Stores the URL and nothing more. It used to initialise OpenSAML and fetch the IdP's metadata here,
+	 * but every setter on a provider runs inside ProviderService.registerProviders(), i.e. inside the
+	 * module's onLoad() - so that turned application boot into "load a 17MB jar and make an outbound HTTPS
+	 * call per configured provider", and any failure in either took the whole application down before it
+	 * could serve a request. Both now happen on first use, via initializeOpenSAMLLib().
+	 */
 	public any function setFederationMetadataURL( required string federationMetadataURL ){
-		variables.federationMetadataURL = federationMetadataURL;
-
-		initializeOpenSAMLLib();
-
-		responseValidator.cacheCerts( variables.federationMetadataURL );
+		variables.federationMetadataURL = arguments.federationMetadataURL;
+		variables.certificatesCached    = false;
 
 		return this;
 	}
@@ -89,13 +95,21 @@ component
 				// IdP must have named; getRedirectUri() is the ACS URL, so it is the expected Recipient.
 				// The final argument binds both the Response and the accepted bearer confirmation to this
 				// outstanding AuthnRequest.
-				assertionXML = variables.responseValidator.parseAndValidateAssertion(
-					javacast( "string", data ),
-					javacast( "string", variables.expectedIssuer ),
-					javacast( "string", variables.clientId ),
-					javacast( "string", getRedirectUri( event ) ),
-					javacast( "string", responseInResponseTo )
-				);
+				//
+				// Needs the classloader context for verification specifically: SignatureValidator.validate
+				// resolves crypto providers through the thread context classloader, which on BoxLang is not
+				// the one the OpenSAML classes came from. Marshalling alone does not need it -
+				// getRawSAMLRequest() and getResponseInResponseTo() go through the same OpenSAML registry
+				// unwrapped and work - so do not widen this to "any OpenSAML call".
+				assertionXML = runWithClassLoader( function(){
+					return variables.responseValidator.parseAndValidateAssertion(
+						javacast( "string", data ),
+						javacast( "string", variables.expectedIssuer ),
+						javacast( "string", variables.clientId ),
+						javacast( "string", getRedirectUri( event ) ),
+						javacast( "string", responseInResponseTo )
+					);
+				} );
 
 				// Do not consume a pending request until every validation step succeeds. The atomic consume
 				// prevents two concurrent deliveries of the same valid response from both succeeding.
@@ -156,16 +170,74 @@ component
 		return binaryEncode( output, "base64" );
 	}
 
+	/**
+	 * Resolved through cbjavaloader rather than createObject( "java", ... ): ModuleConfig hands the bundled
+	 * jar to cbjavaloader's URLClassLoader, which createObject does not consult - it searches the server
+	 * classpath and reports "has not been located in the [java] resolver".
+	 *
+	 * Two readiness conditions, guarded separately. The library is initialised once for the life of the
+	 * application, but the certificates come from an outbound fetch that can fail on its own, so guarding
+	 * both on the generator meant one transient metadata failure - which happens after the generator is
+	 * published - left this provider short-circuiting on every later call with a validator holding no
+	 * certificates, and no way back short of an application restart.
+	 */
 	private void function initializeOpenSAMLLib(){
-		if ( !isNull( variables.AuthNRequestGenerator ) ) {
+		if ( isNull( variables.AuthNRequestGenerator ) ) {
+			runWithClassLoader( function(){
+				var generator = wirebox.getInstance( "javaloader:cbsso.opensaml.AuthNRequestGenerator" );
+				var validator = wirebox.getInstance( "javaloader:cbsso.opensaml.AuthResponseValidator" );
+
+				generator.initOpenSAML();
+
+				// Published only once initOpenSAML() has returned. Assigning beforehand would let a failed
+				// initialisation leave a provider whose guard above short-circuits, so it could never
+				// initialise again for the life of the application.
+				variables.AuthNRequestGenerator = generator;
+				variables.responseValidator     = validator;
+			} );
+		}
+
+		if ( variables.certificatesCached ) {
 			return;
 		}
 
-		variables.AuthNRequestGenerator = createObject( "java", "cbsso.opensaml.AuthNRequestGenerator" );
-		variables.responseValidator     = createObject( "java", "cbsso.opensaml.AuthResponseValidator" );
+		// Reached lazily now rather than from setFederationMetadataURL(), so an unset URL arrives here
+		// instead of never getting this far. Named rather than left to fail inside cacheCerts, where an
+		// empty URL surfaces as an opaque fetch error on the user's first sign-in.
+		if ( !len( trim( variables.federationMetadataURL ) ) ) {
+			throw(
+				type    = "MicrosoftSAMLProvider.MissingConfiguration",
+				message = "federationMetadataURL is required but not set",
+				detail  = "Set it on the provider definition; it is the source of the signing certificates."
+			);
+		}
 
-		variables.AuthNRequestGenerator.initOpenSAML();
-		responseValidator.cacheCerts( variables.federationMetadataURL );
+		variables.responseValidator.cacheCerts( variables.federationMetadataURL );
+
+		variables.certificatesCached = true;
+	}
+
+	/**
+	 * OpenSAML's InitializationService discovers its providers through ServiceLoader, which reads the
+	 * *thread context* classloader. On BoxLang that is not cbjavaloader's URLClassLoader, so discovery finds
+	 * nothing and initialisation fails; Adobe ColdFusion resolves it without help. Swapped only for the
+	 * duration of the call, and restored in a finally so a failure cannot leak the wrong loader into the
+	 * request thread.
+	 */
+	private any function runWithClassLoader( required function callback ){
+		if ( !structKeyExists( server, "BoxLang" ) ) {
+			return callback();
+		}
+
+		var currentThread       = createObject( "java", "java.lang.Thread" ).currentThread();
+		var originalClassLoader = currentThread.getContextClassLoader();
+
+		try {
+			currentThread.setContextClassLoader( variables.javaLoader.getURLClassLoader() );
+			return callback();
+		} finally {
+			currentThread.setContextClassLoader( originalClassLoader );
+		}
 	}
 
 }

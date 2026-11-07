@@ -42,6 +42,17 @@ dependencies {
 
     implementation "org.slf4j:slf4j-api:1.7.36"
     implementation "org.slf4j:slf4j-simple:1.7.36"
+
+    // OpenSAML 4.0.1 resolves these transitively at versions with published CVEs. Raised to the last
+    // releases on each line OpenSAML 4 is compatible with; xmlsec stays on 2.x because 3.x and later
+    // need OpenSAML 5.
+    constraints {
+        implementation( "org.apache.santuario:xmlsec:2.3.4" ) { because "CVE-2021-40690, fixed in 2.2.3" }
+        implementation( "com.fasterxml.woodstox:woodstox-core:6.7.0" ) { because "CVE-2022-40151/40152, fixed in 6.4.0" }
+        implementation( "org.apache.httpcomponents:httpclient:4.5.14" ) { because "CVE-2020-13956, fixed in 4.5.13" }
+        implementation( "commons-io:commons-io:2.18.0" ) { because "CVE-2021-29425, fixed in 2.7" }
+        implementation( "org.apache.velocity:velocity-engine-core:2.4.1" ) { because "CVE-2020-13936, fixed in 2.3" }
+    }
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

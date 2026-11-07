@@ -80,6 +80,12 @@ component singleton {
 	 *
 	 * The leading-"<" check is a second primitive, not the same one: xmlParse treats input that does not
 	 * begin with "<" as a path or URL and fetches it.
+	 *
+	 * The document is parsed exactly as received, with no textual rewrite first. The signature is computed
+	 * over canonical XML without comments, so a sender can add comments to a signed value without breaking
+	 * it, and comments shaped like `<!--xmlns="-->...<!--"-->` steer a regex that strips namespace
+	 * declarations into deleting the signed text between them. Every XPath here matches on local-name(), so
+	 * the namespaces can stay.
 	 */
 	private any function parseSAML( required string samlXML ){
 		var document = trim( arguments.samlXML );
@@ -95,12 +101,11 @@ component singleton {
 			);
 		}
 
-		return xmlParse( document.reReplace( "xmlns="".+?""", "", "all" ) );
+		return xmlParse( document );
 	}
 
 	/**
-	 * Matched on local-name() rather than the `samlp:` prefix. parseSAML() strips only the default namespace
-	 * declaration, so `xmlns:samlp` survives on the document - but BoxLang's xmlSearch does not resolve a
+	 * Matched on local-name() rather than the `samlp:` prefix. BoxLang's xmlSearch does not resolve a
 	 * prefixed XPath against a prefix declared in the document, so `//samlp:StatusCode` finds nothing there
 	 * and a valid, signed, successful assertion is reported as a failure. local-name() is the form that
 	 * behaves the same on every engine.
@@ -134,11 +139,21 @@ component singleton {
 	 * Every asserted attribute, keyed by its `Name` and always holding an array - a claim may carry more
 	 * than one AttributeValue (Entra group and role claims routinely do), and an IdP may split one claim
 	 * across repeated Attribute elements.
+	 *
+	 * Anchored to the Assertion's own AttributeStatements rather than searched for anywhere below it. The
+	 * Assertion carries its enveloped ds:Signature, which the signature does not cover, and ds:KeyInfo admits
+	 * elements from any namespace - so an Attribute added there survives verification and, sitting before the
+	 * AttributeStatement, would be the first match.
 	 */
 	private struct function extractClaims( required xmlDoc ){
 		var claims = {};
 
-		for ( var node in xmlSearch( xmlDoc, "//*[local-name()='Attribute'][@Name]" ) ) {
+		for (
+			var node in xmlSearch(
+				xmlDoc,
+				"/*[local-name()='Assertion']/*[local-name()='AttributeStatement']/*[local-name()='Attribute'][@Name]"
+			)
+		) {
 			var name = trim( node.xmlAttributes.Name );
 
 			if ( !len( name ) ) {
@@ -165,7 +180,10 @@ component singleton {
 	 * portable identifier from a scoped one without it.
 	 */
 	private struct function extractSubjectNameId( required xmlDoc ){
-		var nodes = xmlSearch( xmlDoc, "//*[local-name()='Subject']/*[local-name()='NameID']" );
+		var nodes = xmlSearch(
+			xmlDoc,
+			"/*[local-name()='Assertion']/*[local-name()='Subject']/*[local-name()='NameID']"
+		);
 
 		if ( !nodes.len() ) {
 			return { "value" : "", "format" : "" };
