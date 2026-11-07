@@ -26,6 +26,10 @@ jobs:
   build:
     name: Build & Publish
     runs-on: ubuntu-22.04
+    # Queue stable releases rather than letting duplicate runs race or cancel a publish.
+    concurrency:
+      group: ${{ (inputs.snapshot || false) && format('snapshot-{0}', github.ref) || 'stable-release' }}
+      cancel-in-progress: false
     outputs:
       release_version: ${{ steps.current_version.outputs.version }}
       release_commit: ${{ steps.release_revision.outputs.sha }}
@@ -58,6 +62,27 @@ jobs:
             echo "BRANCH=development" >> $GITHUB_ENV
           fi
 
+      - name: Guard Stable Release
+        if: env.SNAPSHOT == 'false'
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF" != 'refs/heads/main' ]; then
+            echo "::error::Stable releases must run from main."
+            exit 1
+          fi
+          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Stable releases require a major.minor.patch version, got: $VERSION"
+            exit 1
+          fi
+
+          # Query the remote, since checkout may not have fetched existing tags.
+          # A network/authentication error must fail the step, not look like a missing tag.
+          existing_tag=$(git ls-remote --tags origin "refs/tags/v${VERSION}")
+          if [ -n "$existing_tag" ]; then
+            echo "::error::v${VERSION} already exists. Refusing to finalize or publish it again. Inspect any partial release manually; do not move the tag."
+            exit 1
+          fi
+
       - name: Update changelog [unreleased] with latest version
         uses: thomaseizinger/keep-a-changelog-new-release@1.3.0
         if: env.SNAPSHOT == 'false'
@@ -87,13 +112,16 @@ jobs:
         if: env.SNAPSHOT == 'false'
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Tag Version
-        uses: rickstaa/action-create-tag@v1.6.1
+      - name: Tag Version Without Overwriting
         if: env.SNAPSHOT == 'false'
-        with:
-          tag: "v${{ env.VERSION }}"
-          force_push_tag: true
-          message: "Latest Release v${{ env.VERSION }}"
+        env:
+          RELEASE_COMMIT: ${{ steps.release_revision.outputs.sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${VERSION}" "$RELEASE_COMMIT" -m "Release v${VERSION}"
+          # A concurrent tag creation must fail here, before publishing any artifacts.
+          git push origin "refs/tags/v${VERSION}"
 
       - name: Upload Build Artifacts
         if: success()
@@ -119,11 +147,14 @@ jobs:
         run: |
           cd .tmp/${{ env.MODULE_ID }}
           cat box.json
-          box forgebox publish --force
+          if [ "$SNAPSHOT" == 'true' ]; then
+            box forgebox publish --force
+          else
+            box forgebox publish
+          fi
 
       - name: Create Github Release
         uses: taiki-e/create-gh-release-action@v1.6.2
-        continue-on-error: true
         if: env.SNAPSHOT == 'false'
         with:
           title: ${{ env.VERSION }}
