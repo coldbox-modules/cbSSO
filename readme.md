@@ -71,6 +71,13 @@ component {
 When `samlRequestCacheName` is set, the named cache must already be registered with CacheBox when cbSSO
 activates; otherwise module activation fails rather than silently falling back to local memory.
 
+### SAML signing certificates
+
+The Microsoft SAML provider reads its signing certificates from `federationMetadataURL` on first use and
+re-reads them every 60 minutes, so a rotated IdP certificate is picked up without a restart. Set
+`certificateRefreshMinutes` on the provider definition to change the interval. If a refresh fails, the
+certificates already held stay in use and the refresh is retried after 5 minutes.
+
 For more complete documentation covering features and implementation check out our documentation site [cbsso.ortusbooks.com](https://cbsso.ortusbooks.com).
 
 

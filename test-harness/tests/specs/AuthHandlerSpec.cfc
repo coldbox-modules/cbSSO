@@ -59,6 +59,28 @@ component extends="coldbox.system.testing.BaseTestCase" {
 				expect( event.getValue( "relocate_URL", "" ) ).toInclude( "/main/fakeIdentityProvider" );
 			} );
 
+			it( "redirects start() to the error page when the provider cannot build its request", function(){
+				var providers = getInstance( "ProviderService@cbsso" ).getProviders();
+				var original  = providers[ "CustomProvider" ];
+
+				providers[ "CustomProvider" ] = createStub()
+					.$( "getName", "CustomProvider" )
+					.$(
+						method         = "startAuthenticationWorflow",
+						throwException = true,
+						throwMessage   = "metadata unreachable"
+					);
+
+				try {
+					var event = execute( route = "/cbsso/auth/CustomProvider/start", renderResults = false );
+				} finally {
+					providers[ "CustomProvider" ] = original;
+				}
+
+				expect( event.getValue( "relocate_event", "__none__" ) ).toBe( moduleSettings.errorRedirect );
+				expect( event.getValue( "relocate_URL", "" ) ).toBeEmpty();
+			} );
+
 			it( "does not announce CBSSOAuthorization for a missing provider", function(){
 				execute( route = "/cbsso/auth/notaprovider", renderResults = false );
 
