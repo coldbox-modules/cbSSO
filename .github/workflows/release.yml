@@ -26,6 +26,9 @@ jobs:
   build:
     name: Build & Publish
     runs-on: ubuntu-22.04
+    outputs:
+      release_version: ${{ steps.current_version.outputs.version }}
+      release_commit: ${{ steps.release_revision.outputs.sha }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -43,7 +46,9 @@ jobs:
       - name: "Setup Environment Variables For Build Process"
         id: current_version
         run: |
-          echo "VERSION=`cat box.json | jq '.version' -r`" >> $GITHUB_ENV
+          version=$(jq -r '.version' box.json)
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           box package set version=@build.version@+@build.number@
           # Stable release or development snapshot
           echo "Github Ref is $GITHUB_REF"
@@ -75,6 +80,12 @@ jobs:
           author_email: info@ortussolutions.com
           message: 'Finalized changelog for v${{ env.VERSION }}'
           add: changelog.md
+
+      # Capture the finalized commit, not the original push SHA or a later main revision.
+      - name: Record Release Revision
+        id: release_revision
+        if: env.SNAPSHOT == 'false'
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Tag Version
         uses: rickstaa/action-create-tag@v1.6.1
@@ -125,44 +136,102 @@ jobs:
   ##########################################################################################
   prep_next_release:
     name: Prep Next Release
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && needs.build.outputs.release_commit != ''
     runs-on: ubuntu-22.04
     needs: [ build ]
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: prepare-release-${{ needs.build.outputs.release_version }}
+      cancel-in-progress: false
+    env:
+      RELEASE_VERSION: ${{ needs.build.outputs.release_version }}
+      RELEASE_COMMIT: ${{ needs.build.outputs.release_commit }}
+      GH_TOKEN: ${{ github.token }}
     steps:
-      # Checkout development
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - name: Checkout Development
+        uses: actions/checkout@v4
         with:
           ref: development
+          fetch-depth: 0
 
       - name: Setup CommandBox
         uses: Ortus-Solutions/setup-commandbox@v2.0.1
-        with:
-          forgeboxAPIKey: ${{ secrets.FORGEBOX_TOKEN }}
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.MODULE_ID }}
-          path: .tmp
-
-      # Copy the changelog to the development branch
-      - name: Copy Changelog
+      - name: Prepare Release Merge
+        id: prepare
+        shell: bash
         run: |
-          cp .tmp/changelog.md changelog.md
+          branch="automation/prepare-after-v${RELEASE_VERSION}"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
 
-      # Bump to next version
-      - name: Bump Version
+          # Do not recreate an already reviewed, merged, or closed preparation PR.
+          existing_pr=$(gh pr list --base development --head "$branch" --state all --json url --jq '.[0].url // empty')
+          if [ -n "$existing_pr" ]; then
+            echo "Preparation PR already exists: $existing_pr"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Recover a previous attempt that pushed successfully but failed to open its PR.
+          if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+            git switch --create "$branch" "origin/$branch"
+            git merge-base --is-ancestor "$RELEASE_COMMIT" HEAD
+          else
+            git switch --create "$branch"
+            if ! git merge --no-ff "$RELEASE_COMMIT" -m "Merge release v${RELEASE_VERSION} into development"; then
+              echo "::error::Release merge conflicts. No branch was pushed and development is unchanged. Resolve the release merge manually."
+              git merge --abort
+              exit 1
+            fi
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Check Development Version
+        id: version
+        if: steps.prepare.outputs.ready == 'true'
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+
+          def version(value):
+              if not re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", value):
+                  raise SystemExit(f"Expected a stable major.minor.patch version, got {value!r}")
+              return tuple(map(int, value.split(".")))
+
+          with open("box.json") as package:
+              current = json.load(package)["version"]
+          released = os.environ["RELEASE_VERSION"]
+          if version(current) < version(released):
+              raise SystemExit(f"Development version {current} is behind released version {released}; review manually")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"bump={'true' if version(current) == version(released) else 'false'}\n")
+          print(f"Development: {current}; released: {released}")
+          PY
+
+      - name: Bump Development Version Once
+        if: steps.version.outputs.bump == 'true'
         run: |
           box bump --minor --!TagVersion
+          git add box.json
+          git commit -m "Prepare next minor version after v${RELEASE_VERSION}"
 
-      # Commit it back to development
-      - name: Commit Version Bump
-        uses: EndBug/add-and-commit@v9.1.1
-        with:
-          author_name: Github Actions
-          author_email: info@ortussolutions.com
-          message: 'Version bump'
-          add: |
-            box.json
-            changelog.md
+      - name: Open Preparation PR
+        if: steps.prepare.outputs.ready == 'true'
+        env:
+          PREPARATION_BRANCH: ${{ steps.prepare.outputs.branch }}
+        run: |
+          # Never force-push or update development directly.
+          git push origin "$PREPARATION_BRANCH"
+          gh pr create \
+            --base development \
+            --head "$PREPARATION_BRANCH" \
+            --title "Prepare development after v${RELEASE_VERSION}" \
+            --body "Merges finalized release commit ${RELEASE_COMMIT} into development, preserving its history and unreleased changes. Advances the minor version only if development is still at ${RELEASE_VERSION}. Review the changelog and version before merging. Use a merge commit (not squash or rebase) to preserve release ancestry."
+          echo "::notice::PRs created with GITHUB_TOKEN do not trigger PR workflows automatically. Run the checks explicitly or close and reopen the PR with a maintainer account before merging."
