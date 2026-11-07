@@ -70,10 +70,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0] - 2025-12-05
 
-## [1.0.7] - 2024-12-06
-
-## [1.0.7] - 2024-09-12
-
 ## [1.0.7] - 2024-09-05
 
 ## [1.0.6] - 2024-09-04
@@ -100,7 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [2.0.0]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.7...v2.0.0
 
-[1.0.7]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.7...v1.0.7
+[1.0.7]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.6...v1.0.7
 
 [1.0.6]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.5...v1.0.6
 
