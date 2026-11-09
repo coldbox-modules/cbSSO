@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-11-09
+
 ### Fixed
 
 - Re-read the SAML provider's federation metadata every `certificateRefreshMinutes` (default 60) instead of once per application lifetime. After an IdP rotated its signing certificate, every login failed until the application restarted. A failed refresh keeps the certificates already held and retries after 5 minutes.
@@ -105,7 +107,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for several SSO IP integrations
 
-[Unreleased]: https://github.com/coldbox-modules/cbSSO/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/coldbox-modules/cbSSO/compare/v3.4.0...HEAD
+
+[3.4.0]: https://github.com/coldbox-modules/cbSSO/compare/v3.3.0...v3.4.0
 
 [3.3.0]: https://github.com/coldbox-modules/cbSSO/compare/v3.0.0...v3.3.0
 
