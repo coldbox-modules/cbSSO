@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Re-read the SAML provider's federation metadata every `certificateRefreshMinutes` (default 60) instead of once per application lifetime. After an IdP rotated its signing certificate, every login failed until the application restarted. A failed refresh keeps the certificates already held and retries after 5 minutes.
+
+- Report a failed login, rather than an unhandled error, when the SAML provider cannot initialise OpenSAML or fetch its metadata in `processAuthorizationEvent`.
+
+- Redirect to `errorRedirect` when a provider cannot build its authentication request in `Auth.start`, instead of an unhandled error. Since OpenSAML initialisation and the metadata fetch moved to first use, an unreachable metadata URL surfaced here.
+
 ## [3.3.0] - 2026-11-07
 
 ### Fixed
@@ -79,10 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0] - 2025-12-05
 
-## [1.0.7] - 2024-12-06
-
-## [1.0.7] - 2024-09-12
-
 ## [1.0.7] - 2024-09-05
 
 ## [1.0.6] - 2024-09-04
@@ -111,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [2.0.0]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.7...v2.0.0
 
-[1.0.7]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.7...v1.0.7
+[1.0.7]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.6...v1.0.7
 
 [1.0.6]: https://github.com/coldbox-modules/cbSSO/compare/v1.0.5...v1.0.6
 
