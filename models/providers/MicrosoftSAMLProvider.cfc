@@ -11,6 +11,7 @@ component
 	property name="redirectUri";
 	property name="federationMetadataURL";
 	property name="expectedIssuer";
+	property name="certificateRefreshMinutes";
 
 	property name="wirebox"    inject="wirebox";
 	property name="javaLoader" inject="loader@cbjavaloader";
@@ -18,11 +19,17 @@ component
 	property name="responseValidator";
 	property name="SAMLParsingService" inject="SAMLParsingService@cbsso";
 	property name="SAMLRequestTracker" inject="SAMLRequestTracker@cbsso";
+	property name="log"                inject="logbox:logger:{this}";
 
-	variables.name                    = "Entra";
-	variables.federationMetadataURL   = "";
-	variables.maxDecodedResponseChars = 1048576;
-	variables.certificatesCached      = false;
+	variables.name                      = "Entra";
+	variables.federationMetadataURL     = "";
+	variables.maxDecodedResponseChars   = 1048576;
+	variables.certificatesCached        = false;
+	// Signing certificates rotate, so the metadata is re-read on this interval rather than once per
+	// application lifetime; a failed refresh keeps the certificates already held and retries sooner.
+	variables.certificateRefreshMinutes = 60;
+	variables.certificateRetryMinutes   = 5;
+	variables.certificatesRefreshAfter  = "";
 
 	public string function getName(){
 		return variables.name;
@@ -51,9 +58,10 @@ component
 	public any function processAuthorizationEvent( required any event ){
 		var authResponse = wirebox.getInstance( "SSOAuthorizationResponse@cbsso" );
 
-		initializeOpenSAMLLib();
-
 		try {
+			// Inside the try so an unreachable metadata URL fails this login rather than the request
+			initializeOpenSAMLLib();
+
 			var decoded = binaryDecode( event.getValue( "SAMLResponse" ), "base64" );
 			var data    = charsetEncode( decoded, "utf-8" );
 
@@ -197,7 +205,7 @@ component
 			} );
 		}
 
-		if ( variables.certificatesCached ) {
+		if ( certificatesAreFresh() ) {
 			return;
 		}
 
@@ -212,9 +220,41 @@ component
 			);
 		}
 
-		variables.responseValidator.cacheCerts( variables.federationMetadataURL );
+		lock name="cbsso-saml-certificates-#variables.name#" type="exclusive" timeout="30" {
+			if ( certificatesAreFresh() ) {
+				return;
+			}
 
-		variables.certificatesCached = true;
+			try {
+				variables.responseValidator.cacheCerts( variables.federationMetadataURL );
+			} catch ( any e ) {
+				if ( !variables.certificatesCached ) {
+					rethrow;
+				}
+
+				// cacheCerts only replaces the certificates once new ones have parsed, so the IdP being
+				// briefly unreachable must not stop every login that the held certificates still verify.
+				variables.log.warn(
+					"Could not refresh signing certificates for SAML provider [#variables.name#]; keeping the current ones",
+					{ "error" : e.message }
+				);
+				variables.certificatesRefreshAfter = dateAdd( "n", variables.certificateRetryMinutes, now() );
+				return;
+			}
+
+			variables.certificatesCached       = true;
+			variables.certificatesRefreshAfter = dateAdd(
+				"n",
+				variables.certificateRefreshMinutes,
+				now()
+			);
+		}
+	}
+
+	private boolean function certificatesAreFresh(){
+		return variables.certificatesCached
+		&& isDate( variables.certificatesRefreshAfter )
+		&& dateCompare( now(), variables.certificatesRefreshAfter ) < 0;
 	}
 
 	/**

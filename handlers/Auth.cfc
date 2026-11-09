@@ -22,8 +22,27 @@ component {
 		prc.ssoProvider = variables.ProviderService.get( providerName );
 	}
 
+	/**
+	 * A provider that cannot build its request - an unreachable IdP metadata URL, a missing jar - sends the
+	 * user to the configured error page rather than an unhandled error. The relocate stays outside the try
+	 * because relocate() aborts the request, which a catch would swallow.
+	 */
 	function start( event, rc, prc ){
-		relocate( url = prc.ssoProvider.startAuthenticationWorflow( event ) );
+		var authorizationURL = "";
+
+		try {
+			authorizationURL = prc.ssoProvider.startAuthenticationWorflow( event );
+		} catch ( any e ) {
+			log.error(
+				"Could not start SSO with provider [#prc.ssoProvider.getName()#]",
+				{ "error" : e.message, "detail" : e.detail ?: "" }
+			);
+
+			relocate( variables.moduleSettings.errorRedirect );
+			return;
+		}
+
+		relocate( url = authorizationURL );
 	}
 
 	function authorize( event, rc, prc ){
